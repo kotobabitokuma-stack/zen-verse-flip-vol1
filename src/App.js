@@ -233,10 +233,9 @@ const Pi = window.Pi;
 
 const handlePayment = async () => {
   try {
-// 1. まずはユーザーを認証
+    // 1. まずはユーザーを認証（ここでお掃除機能も動かすわ）
     const scopes = ['payments'];
     const auth = await Pi.authenticate(scopes, async (payment) => {
-      // ⭐ 未完了の決済を見つけたら、その場でお掃除（完了報告）しちゃうわ！
       try {
         await Pi.completePayment(payment.identifier, payment.transaction.txid);
         console.log("保留中だった決済を無事に完了させたわ！");
@@ -247,20 +246,35 @@ const handlePayment = async () => {
     
     console.log("認証成功！パイオニア名:", auth.user.username);
 
-    // 2. 認証ができたら、3 Pi の決済画面を作るわよ
-    const payment = await Pi.createPayment({
+    // 2. 3 Pi の決済画面を作るわよ（IDを新しくしてエラーを回避！）
+    await Pi.createPayment({
       amount: 3.0,
       memo: "Support Zen Verse Flip Project",
-      metadata: { productId: "zen_verse_vol1" },
+      metadata: { productId: "kbk_support_v2" }, // ⭐ここを新しくしたわよ！
     }, {
       onReadyForServerApproval: async (paymentId) => {
-        // サーバー側の承認を呼び出すわ
         await fetch('/api/approve', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ paymentId }),
         });
       },
+      onReadyForServerCompletion: async (paymentId, txid) => {
+        // ⭐ここでも完了報告を忘れずに！
+        await Pi.completePayment(paymentId, txid);
+        alert("Thank you for your support! 決済が完了しました。");
+      },
+      onCancel: (paymentId) => console.log("キャンセル:", paymentId),
+      onError: (error, paymentId) => {
+        console.error("エラー:", error);
+        alert("もう一度試してみてね！");
+      },
+    });
+  } catch (err) {
+    console.error("認証失敗:", err);
+    alert("Pi Browserを一度閉じて開き直してみて！");
+  }
+};
 onReadyForServerCompletion: async (paymentId, txid) => {
         console.log("決済完了！ txid:", txid);
         
