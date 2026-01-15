@@ -1,7 +1,7 @@
-# Kotonoha Bridge Key (KBK) - Official Metadata
+# Kotonoha Bright Key (KBK) - Official Metadata
 
 [DOCUMENTATION]
-ORG_NAME = "Kotonoha Bridge Key Project"
+ORG_NAME = "Kotonoha Bright Key Project"
 ORG_URL = "https://kotonoha.pi"
 ORG_DESCRIPTION = "A project to cherish your own 'likes' and the 'likes' of others, creating a peaceful and warm place together."
 
@@ -9,7 +9,7 @@ ORG_DESCRIPTION = "A project to cherish your own 'likes' and the 'likes' of othe
 code = "KBK"
 issuer = "GAG5643HGJSSYNGJCSKOT432LZDTJK6OC7DK5PPPEYCCOMYST7LSSHOI"
 display_decimals = 7
-name = "Kotonoha Bridge Key"
+name = "Kotonoha Bright Key"
 desc = "1. Respect your own 'likes' and others' 'likes'. 2. Create a peaceful, warm place together. 3. Enable Metaverse construction and real-world cafe usage."
 conditions = "Total supply: 314,159,265 KBK. 10% is held by the founder with 1-3 years lock-up period."
 
