@@ -289,33 +289,7 @@ const buttonStyle = {
   opacity: 0.8
 };
 
-// アプリ本体
-function AppWithPi({ user }) {
-  const [selectedDayIndex, setSelectedDayIndex] = useState(null);
-  const [showText, setShowText] = useState(false);
-  const [isTop, setIsTop] = useState(true);
-  const touchStartX = useRef(0);
-
-  const selectedDay = selectedDayIndex !== null ? days[selectedDayIndex] : null;
-
-  const handleSwipe = (direction) => {
-    if (selectedDayIndex === null) return;
-    if (direction === "left" && selectedDayIndex < days.length - 1) {
-      setSelectedDayIndex(selectedDayIndex + 1);
-      setShowText(false);
-    }
-    if (direction === "right") {
-      if (selectedDayIndex === 1) {
-        setIsTop(true);
-        setSelectedDayIndex(null);
-      } else if (selectedDayIndex > 1) {
-        setSelectedDayIndex(selectedDayIndex - 1);
-        setShowText(false);
-      }
-    }
-  }
-
-  if (selectedDay === null) {
+if (selectedDay === null) {
     if (isTop) {
       return (
         <div style={{ textAlign: "center", padding: "10px" }}>
@@ -326,6 +300,21 @@ function AppWithPi({ user }) {
             onClick={() => setIsTop(false)}
           />
           <p style={{ marginTop: "12px", fontSize: "18px", color: "#666" }}>Tap to Start</p>
+          
+          <button 
+            onClick={(e) => { e.stopPropagation(); handlePayment(); }}
+            style={{ 
+              ...buttonStyle, 
+              background: "#FFD700", 
+              color: "#000", 
+              fontWeight: "bold", 
+              marginTop: "20px", 
+              padding: "12px 24px",
+              opacity: 1
+            }}
+          >
+            Support this App (3 Pi)
+          </button>
           
           <PiUserBadge user={user} />
         </div>
@@ -349,12 +338,12 @@ function AppWithPi({ user }) {
 
   return (
     <div style={{ textAlign: "center", padding: 0 }}
-         onTouchStart={e => { touchStartX.current = e.touches[0].clientX; }}
-         onTouchEnd={e => {
-           const deltaX = e.changedTouches[0].clientX - touchStartX.current;
-           if (deltaX > 50) handleSwipe("right");
-           else if (deltaX < -50) handleSwipe("left");
-         }}
+          onTouchStart={e => { touchStartX.current = e.touches[0].clientX; }}
+          onTouchEnd={e => {
+            const deltaX = e.changedTouches[0].clientX - touchStartX.current;
+            if (deltaX > 50) handleSwipe("right");
+            else if (deltaX < -50) handleSwipe("left");
+          }}
     >
       <div style={{ position: "relative", width: "100%", cursor: "pointer" }} onClick={() => setShowText(!showText)}>
         <img src={selectedDay.image} alt={selectedDay.day} style={{ width: "100%", height: "auto", borderRadius: "10px" }} />
@@ -388,4 +377,3 @@ function AppWithPi({ user }) {
 if (!window.AppComponent) { window.AppComponent = AppWithPi; }
 const root = ReactDOM.createRoot(document.getElementById("root"));
 root.render(<AppWithPi user={window.piUser} />);
-export default AppWithPi;
