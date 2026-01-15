@@ -251,7 +251,7 @@ const handlePayment = async () => {
     await Pi.createPayment({
       amount: 3.0,
       memo: "Support Zen Verse Flip Vol.1",
-      metadata: { productId: "zen_verse_flip_v3" }, // ◀ここをv3にしているのがポイントよ
+      metadata: { productId: "zen_verse_flip_v4" }, // ◀ここをv3にしているのがポイントよ
     }, {
       onReadyForServerApproval: async (paymentId) => {
         await fetch('/api/approve', {
