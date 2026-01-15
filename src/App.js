@@ -35,12 +35,6 @@ import day29 from "./assets/images/day29.png";
 import day30 from "./assets/images/day30.png";
 import day31 from "./assets/images/day31.png";
 
-const days = [
-  { day: "Top", image: top01, text: "" },
-  { day: "Day 1", image: day1, text: `Every encounter and event comes to bring happiness...` }, // テキストは長いので中略していますが、実際はゆうきくんの元の文章を入れてね
-  // ... (day2からday31までのデータはゆうきくんの元のコードのまま維持してね)
-];
-
 // 便宜上、daysの定義はゆうきくんの元のフルバージョンを使ってね！
 const days = [
   { day: "Top", image: top01, text: "" },
