@@ -233,27 +233,41 @@ const Pi = window.Pi;
 
 const handlePayment = async () => {
   try {
+    // 1. まずはユーザーを認証（これがないと決済画面が立ち上がらないわ！）
+    const scopes = ['payments'];
+    const auth = await Pi.authenticate(scopes, (payment) => {
+      console.log("未完了の決済が見つかったわ:", payment);
+    });
+    
+    console.log("認証成功！パイオニア名:", auth.user.username);
+
+    // 2. 認証ができたら、3 Pi の決済画面を作るわよ
     const payment = await Pi.createPayment({
       amount: 3.0,
       memo: "Support Zen Verse Flip Project",
       metadata: { productId: "zen_verse_vol1" },
     }, {
       onReadyForServerApproval: async (paymentId) => {
-        // 先ほど作った api/approve.js を叩きにいくわ！
+        // サーバー側の承認を呼び出すわ
         await fetch('/api/approve', {
           method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ paymentId }),
         });
       },
       onReadyForServerCompletion: async (paymentId, txid) => {
-        // 完了の合図（今回はシンプルにコンソールに出すだけ）
-        console.log("Payment completed:", txid);
+        console.log("決済完了！ txid:", txid);
+        alert("Thank you for your support!");
       },
-      onCancel: (paymentId) => console.log("Cancelled"),
-      onError: (error, paymentId) => console.error("Error:", error),
+      onCancel: (paymentId) => console.log("キャンセルされたわ", paymentId),
+      onError: (error, paymentId) => {
+        console.error("エラー発生:", error);
+        alert("Payment Error: " + error.message);
+      },
     });
   } catch (err) {
-    console.error(err);
+    console.error("認証に失敗しちゃった:", err);
+    alert("Pi Browserで開いて、ログイン状態を確認してね。");
   }
 };
 
@@ -316,9 +330,9 @@ function AppWithPi({ user }) {
   };
 
   if (selectedDay === null) {
-    if (isTop) {
+  if (isTop) {
       return (
-        <div style={{ textAlign: "center", padding: "10px" }}>
+        <div style={{ textAlign: "center", padding: "10px", paddingBottom: "100px" }}> {/* 下に余白を作ったわ */}
           <img
             src={days[0].image}
             alt="Top"
@@ -334,9 +348,12 @@ function AppWithPi({ user }) {
               background: "#FFD700", 
               color: "#000", 
               fontWeight: "bold", 
-              marginTop: "20px", 
+              marginTop: "10px", // 少し上に
+              marginBottom: "80px", // バナー広告（60px）より上に配置
               padding: "12px 24px",
-              opacity: 1
+              opacity: 1,
+              position: "relative",
+              zIndex: 1001 // 広告より手前に
             }}
           >
             Support this App (3 Pi)
