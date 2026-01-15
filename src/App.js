@@ -327,14 +327,6 @@ function AppWithPi({ user }) {
           />
           <p style={{ marginTop: "12px", fontSize: "18px", color: "#666" }}>Tap to Start</p>
           
-          {/* 決済テスト用のボタンを追加！ */}
-          <button 
-            onClick={(e) => { e.stopPropagation(); handlePayment(); }}
-            style={{ ...buttonStyle, background: "#FFD700", color: "#000", fontWeight: "bold", marginTop: "20px", padding: "12px 24px" }}
-          >
-            Support this App (3 Pi)
-          </button>
-          
           <PiUserBadge user={user} />
         </div>
       );
