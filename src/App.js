@@ -255,9 +255,18 @@ const handlePayment = async () => {
           body: JSON.stringify({ paymentId }),
         });
       },
-      onReadyForServerCompletion: async (paymentId, txid) => {
+onReadyForServerCompletion: async (paymentId, txid) => {
         console.log("決済完了！ txid:", txid);
-        alert("Thank you for your support!");
+        
+        try {
+          // ⭐ これが大事！Piネットワークに「完了」を報告するわ
+          await Pi.completePayment(paymentId, txid);
+          console.log("完了報告に成功したわ！");
+          alert("Thank you for your support! 決済が完全に完了しました。");
+        } catch (e) {
+          console.error("完了報告エラー:", e);
+          alert("完了報告でエラーが発生したわ: " + e.message);
+        }
       },
       onCancel: (paymentId) => console.log("キャンセルされたわ", paymentId),
       onError: (error, paymentId) => {
