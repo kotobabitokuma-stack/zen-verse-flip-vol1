@@ -250,7 +250,7 @@ const handlePayment = async () => {
     await Pi.createPayment({
       amount: 3.0,
       memo: "Support Zen Verse Flip Project",
-      metadata: { productId: "kbk_support_v2" }, // ⭐ここを新しくしたわよ！
+      metadata: { productId: "kbk_support_v2" },
     }, {
       onReadyForServerApproval: async (paymentId) => {
         await fetch('/api/approve', {
@@ -260,43 +260,22 @@ const handlePayment = async () => {
         });
       },
       onReadyForServerCompletion: async (paymentId, txid) => {
-        // ⭐ここでも完了報告を忘れずに！
-        await Pi.completePayment(paymentId, txid);
-        alert("Thank you for your support! 決済が完了しました。");
+        try {
+          await Pi.completePayment(paymentId, txid);
+          alert("Thank you for your support! 決済が完了しました。");
+        } catch (e) {
+          console.error("完了報告エラー:", e);
+        }
       },
       onCancel: (paymentId) => console.log("キャンセル:", paymentId),
       onError: (error, paymentId) => {
         console.error("エラー:", error);
-        alert("もう一度試してみてね！");
+        alert("もう一度試してみてね！: " + error.message);
       },
     });
   } catch (err) {
     console.error("認証失敗:", err);
     alert("Pi Browserを一度閉じて開き直してみて！");
-  }
-};
-onReadyForServerCompletion: async (paymentId, txid) => {
-        console.log("決済完了！ txid:", txid);
-        
-        try {
-          // ⭐ これが大事！Piネットワークに「完了」を報告するわ
-          await Pi.completePayment(paymentId, txid);
-          console.log("完了報告に成功したわ！");
-          alert("Thank you for your support! 決済が完全に完了しました。");
-        } catch (e) {
-          console.error("完了報告エラー:", e);
-          alert("完了報告でエラーが発生したわ: " + e.message);
-        }
-      },
-      onCancel: (paymentId) => console.log("キャンセルされたわ", paymentId),
-      onError: (error, paymentId) => {
-        console.error("エラー発生:", error);
-        alert("Payment Error: " + error.message);
-      },
-    });
-  } catch (err) {
-    console.error("認証に失敗しちゃった:", err);
-    alert("Pi Browserで開いて、ログイン状態を確認してね。");
   }
 };
 
@@ -359,9 +338,9 @@ function AppWithPi({ user }) {
   };
 
   if (selectedDay === null) {
-  if (isTop) {
+    if (isTop) {
       return (
-        <div style={{ textAlign: "center", padding: "10px", paddingBottom: "100px" }}> {/* 下に余白を作ったわ */}
+        <div style={{ textAlign: "center", padding: "10px", paddingBottom: "100px" }}>
           <img
             src={days[0].image}
             alt="Top"
@@ -377,12 +356,12 @@ function AppWithPi({ user }) {
               background: "#FFD700", 
               color: "#000", 
               fontWeight: "bold", 
-              marginTop: "10px", // 少し上に
-              marginBottom: "80px", // バナー広告（60px）より上に配置
+              marginTop: "10px",
+              marginBottom: "80px",
               padding: "12px 24px",
               opacity: 1,
               position: "relative",
-              zIndex: 1001 // 広告より手前に
+              zIndex: 1001
             }}
           >
             Support this App (3 Pi)
@@ -446,7 +425,4 @@ function AppWithPi({ user }) {
   );
 }
 
-if (!window.AppComponent) { window.AppComponent = AppWithPi; }
-const root = ReactDOM.createRoot(document.getElementById("root"));
-root.render(<AppWithPi user={window.piUser} />);
 export default AppWithPi;
