@@ -1,10 +1,8 @@
 import React, { useState, useRef } from "react";
 import ReactDOM from "react-dom/client";
 
-// Top 画像
+// --- 画像インポート部分はそのまま維持 ---
 import top01 from "./assets/images/top01.png";
-
-// day1～day31 の画像を静的 import
 import day1 from "./assets/images/day1.png";
 import day2 from "./assets/images/day2.png";
 import day3 from "./assets/images/day3.png";
@@ -37,6 +35,13 @@ import day29 from "./assets/images/day29.png";
 import day30 from "./assets/images/day30.png";
 import day31 from "./assets/images/day31.png";
 
+const days = [
+  { day: "Top", image: top01, text: "" },
+  { day: "Day 1", image: day1, text: `Every encounter and event comes to bring happiness...` }, // テキストは長いので中略していますが、実際はゆうきくんの元の文章を入れてね
+  // ... (day2からday31までのデータはゆうきくんの元のコードのまま維持してね)
+];
+
+// 便宜上、daysの定義はゆうきくんの元のフルバージョンを使ってね！
 const days = [
   { day: "Top", image: top01, text: "" },
   { day: "Day 1", image: day1, text: `Every encounter and event comes to bring happiness.
@@ -229,6 +234,35 @@ So, live boldly, shine brightly, and embrace happiness.
 There’s no need to hold back in your life.` }
 ];
 
+// --- Pi SDK 決済ロジック ---
+const Pi = window.Pi;
+
+const handlePayment = async () => {
+  try {
+    const payment = await Pi.createPayment({
+      amount: 3.0,
+      memo: "Support Zen Verse Flip Project",
+      metadata: { productId: "zen_verse_vol1" },
+    }, {
+      onReadyForServerApproval: async (paymentId) => {
+        // 先ほど作った api/approve.js を叩きにいくわ！
+        await fetch('/api/approve', {
+          method: 'POST',
+          body: JSON.stringify({ paymentId }),
+        });
+      },
+      onReadyForServerCompletion: async (paymentId, txid) => {
+        // 完了の合図（今回はシンプルにコンソールに出すだけ）
+        console.log("Payment completed:", txid);
+      },
+      onCancel: (paymentId) => console.log("Cancelled"),
+      onError: (error, paymentId) => console.error("Error:", error),
+    });
+  } catch (err) {
+    console.error(err);
+  }
+};
+
 // PiUserBadge
 function PiUserBadge({ user }) {
   if (!user) return null;
@@ -250,7 +284,6 @@ function PiUserBadge({ user }) {
   );
 }
 
-// ボタンスタイル
 const buttonStyle = {
   padding: "6px 12px",
   fontSize: "14px",
@@ -267,7 +300,7 @@ function AppWithPi({ user }) {
   const [selectedDayIndex, setSelectedDayIndex] = useState(null);
   const [showText, setShowText] = useState(false);
   const [isTop, setIsTop] = useState(true);
-  const touchStartX = useRef(0); // ← ここで定義
+  const touchStartX = useRef(0);
 
   const selectedDay = selectedDayIndex !== null ? days[selectedDayIndex] : null;
 
@@ -277,82 +310,57 @@ function AppWithPi({ user }) {
       setSelectedDayIndex(selectedDayIndex + 1);
       setShowText(false);
     }
-   if (direction === "right") {
-  if (selectedDayIndex === 1) {
-    setIsTop(true);
-    setSelectedDayIndex(null);
-  } else if (selectedDayIndex > 1) {
-    setSelectedDayIndex(selectedDayIndex - 1);
-    setShowText(false);
+    if (direction === "right") {
+      if (selectedDayIndex === 1) {
+        setIsTop(true);
+        setSelectedDayIndex(null);
+      } else if (selectedDayIndex > 1) {
+        setSelectedDayIndex(selectedDayIndex - 1);
+        setShowText(false);
+      }
     }
   }
-  }
 
-if (selectedDay === null) {
-  // トップ画面
-  if (isTop) {
+  if (selectedDay === null) {
+    if (isTop) {
+      return (
+        <div style={{ textAlign: "center", padding: "10px" }}>
+          <img
+            src={days[0].image}
+            alt="Top"
+            style={{ width: "100%", height: "auto", borderRadius: "10px", cursor: "pointer" }}
+            onClick={() => setIsTop(false)}
+          />
+          <p style={{ marginTop: "12px", fontSize: "18px", color: "#666" }}>Tap to Start</p>
+          
+          {/* 決済テスト用のボタンを追加！ */}
+          <button 
+            onClick={(e) => { e.stopPropagation(); handlePayment(); }}
+            style={{ ...buttonStyle, background: "#FFD700", color: "#000", fontWeight: "bold", marginTop: "20px", padding: "12px 24px" }}
+          >
+            Support this App (3 Pi)
+          </button>
+          
+          <PiUserBadge user={user} />
+        </div>
+      );
+    }
+
     return (
-      <div
-        style={{
-          textAlign: "center",
-          padding: "10px",
-        }}
-        onClick={() => setIsTop(false)} // クリックでカレンダーへ
-      >
-        <img
-          src={days[0].image}
-          alt="Top"
-          style={{
-            width: "100%",
-            height: "auto",
-            borderRadius: "10px",
-            cursor: "pointer",
-          }}
-        />
-        <p style={{ marginTop: "12px", fontSize: "18px", color: "#666" }}>
-          Tap to Start
-        </p>
+      <div style={{ textAlign: "center", padding: "10px" }}>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(70px, 1fr))", gap: "10px", justifyItems: "center", marginBottom: "20px" }}>
+          {days.slice(1).map((d, i) => (
+            <button key={i} onClick={() => { setSelectedDayIndex(i + 1); setShowText(false); }}
+              style={{ padding: "16px", fontSize: "18px", borderRadius: "8px", border: "1px solid #ccc", backgroundColor: "#f9f9f9", width: "100%" }}>
+              {d.day}
+            </button>
+          ))}
+        </div>
         <PiUserBadge user={user} />
       </div>
     );
   }
 
-  // 日付一覧画面
-  return (
-    <div style={{ textAlign: "center", padding: "10px" }}>
-      <div
-        style={{
-          display: "grid",
-          gridTemplateColumns: "repeat(auto-fill, minmax(70px, 1fr))",
-          gap: "10px",
-          justifyItems: "center",
-          marginBottom: "20px",
-        }}
-      >
-        {days.slice(1).map((d, i) => (
-          <button
-            key={i}
-            onClick={() => {
-              setSelectedDayIndex(i + 1);
-              setShowText(false);
-            }}
-            style={{
-              padding: "16px",
-              fontSize: "18px",
-              borderRadius: "8px",
-              border: "1px solid #ccc",
-              backgroundColor: "#f9f9f9",
-              width: "100%",
-            }}
-          >
-            {d.day}
-          </button>
-        ))}
-      </div>
-      <PiUserBadge user={user} />
-    </div>
-  );
-}
   return (
     <div style={{ textAlign: "center", padding: 0 }}
          onTouchStart={e => { touchStartX.current = e.touches[0].clientX; }}
@@ -362,81 +370,36 @@ if (selectedDay === null) {
            else if (deltaX < -50) handleSwipe("left");
          }}
     >
-      <div style={{ position: "relative", width: "100%", cursor: "pointer" }}
-     onClick={() => setShowText(!showText)}
->
-  <img
-    src={selectedDay.image}
-    alt={selectedDay.day}
-    style={{ width: "100%", height: "auto", borderRadius: "10px" }}
-  />
-  {selectedDay.text && (
-    <div style={{
-      position: "absolute",
-      bottom: 0,
-      left: 0,
-      width: "100%",
-      maxHeight: showText ? "60%" : "0",
-      overflowY: "auto",
-      background: "linear-gradient(to top, rgba(0,0,0,0.85), rgba(0,0,0,0.3))",
-      color: "white",
-      padding: showText ? "15px" : "0",
-      fontSize: "18px",
-      lineHeight: "1.6",
-      textAlign: "left",
-      borderRadius: "0 0 10px 10px",
-      transition: "all 0.4s ease-in-out"
-    }}>
-      {selectedDay.text.split("\n").map((line, idx) => (
-        <p key={idx} style={{ margin: "0 0 12px 0" }}>{line}</p>
-      ))}
-    </div>
-  )}
-</div>
+      <div style={{ position: "relative", width: "100%", cursor: "pointer" }} onClick={() => setShowText(!showText)}>
+        <img src={selectedDay.image} alt={selectedDay.day} style={{ width: "100%", height: "auto", borderRadius: "10px" }} />
+        {selectedDay.text && (
+          <div style={{
+            position: "absolute", bottom: 0, left: 0, width: "100%", maxHeight: showText ? "60%" : "0",
+            overflowY: "auto", background: "linear-gradient(to top, rgba(0,0,0,0.85), rgba(0,0,0,0.3))",
+            color: "white", padding: showText ? "15px" : "0", fontSize: "18px", lineHeight: "1.6",
+            textAlign: "left", borderRadius: "0 0 10px 10px", transition: "all 0.4s ease-in-out"
+          }}>
+            {selectedDay.text.split("\n").map((line, idx) => (
+              <p key={idx} style={{ margin: "0 0 12px 0" }}>{line}</p>
+            ))}
+          </div>
+        )}
+      </div>
 
-{/* ナビゲーション */}
-<div style={{
-  position: "fixed",
-  bottom: "80px",       // 広告バナーの上に表示
-  left: 0,
-  width: "100%",
-  display: "flex",
-  justifyContent: "space-between",
-  padding: "0 12px",
-  boxSizing: "border-box",
-  zIndex: 200           // 広告より前面に表示
-}}>
-  {/* 左 */}
-  <div style={{ flex: 1, display: "flex", justifyContent: "flex-start" }}>
-    <button
-      onClick={() => { setSelectedDayIndex(null); setShowText(false); }}
-      style={buttonStyle}
-    >
-      All Days
-    </button>
-  </div>
-
-  {/* 右 */}
-  <div style={{ flex: 1, display: "flex", justifyContent: "flex-end" }}>
-    <button
-      onClick={() => { setSelectedDayIndex(null); setShowText(false); setIsTop(true); }}
-      style={buttonStyle}
-    >
-      Top
-    </button>
-  </div>
-</div>
-
-<PiUserBadge user={user} />
+      <div style={{ position: "fixed", bottom: "80px", left: 0, width: "100%", display: "flex", justifyContent: "space-between", padding: "0 12px", boxSizing: "border-box", zIndex: 200 }}>
+        <div style={{ flex: 1, display: "flex", justifyContent: "flex-start" }}>
+          <button onClick={() => { setSelectedDayIndex(null); setShowText(false); }} style={buttonStyle}>All Days</button>
+        </div>
+        <div style={{ flex: 1, display: "flex", justifyContent: "flex-end" }}>
+          <button onClick={() => { setSelectedDayIndex(null); setShowText(false); setIsTop(true); }} style={buttonStyle}>Top</button>
+        </div>
+      </div>
+      <PiUserBadge user={user} />
     </div>
   );
 }
 
-// グローバルに公開
-if (!window.AppComponent) {
-  window.AppComponent = AppWithPi;
-}
-
+if (!window.AppComponent) { window.AppComponent = AppWithPi; }
 const root = ReactDOM.createRoot(document.getElementById("root"));
 root.render(<AppWithPi user={window.piUser} />);
 export default AppWithPi;
