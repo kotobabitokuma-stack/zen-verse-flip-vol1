@@ -233,24 +233,25 @@ const Pi = window.Pi;
 
 const handlePayment = async () => {
   try {
-    // 1. まずはユーザーを認証（ここでお掃除機能も動かすわ）
     const scopes = ['payments'];
+    
+    // 💥 儀式1：認証時に「完了しているのに残っているデータ」を強制的に片付ける
     const auth = await Pi.authenticate(scopes, async (payment) => {
       try {
         await Pi.completePayment(payment.identifier, payment.transaction.txid);
-        console.log("保留中だった決済を無事に完了させたわ！");
+        console.log("同期ズレを起こしていた決済を正常にクローズしたわ！");
       } catch (e) {
-        console.error("保留決済の完了エラー:", e);
+        console.error("お掃除は不要だったみたいね。次へ行くわよ。");
       }
     });
-    
-    console.log("認証成功！パイオニア名:", auth.user.username);
 
-    // 2. 3 Pi の決済画面を作るわよ（IDを新しくしてエラーを回避！）
+    console.log("認証成功！パイオニア:", auth.user.username);
+
+    // 🚀 儀式2：新しい決済リクエストを投げる
     await Pi.createPayment({
       amount: 3.0,
-      memo: "Support Zen Verse Flip Project",
-      metadata: { productId: "kbk_support_v2" },
+      memo: "Support Zen Verse Flip Vol.1",
+      metadata: { productId: "zen_verse_flip_v3" }, // ◀ここをv3にしているのがポイントよ
     }, {
       onReadyForServerApproval: async (paymentId) => {
         await fetch('/api/approve', {
@@ -262,7 +263,7 @@ const handlePayment = async () => {
       onReadyForServerCompletion: async (paymentId, txid) => {
         try {
           await Pi.completePayment(paymentId, txid);
-          alert("Thank you for your support! 決済が完了しました。");
+          alert("Thank you! 決済が完全に完了しました！");
         } catch (e) {
           console.error("完了報告エラー:", e);
         }
@@ -270,7 +271,7 @@ const handlePayment = async () => {
       onCancel: (paymentId) => console.log("キャンセル:", paymentId),
       onError: (error, paymentId) => {
         console.error("エラー:", error);
-        alert("もう一度試してみてね！: " + error.message);
+        alert("通信が不安定かも？入金を確認してみてね！\n" + error.message);
       },
     });
   } catch (err) {
