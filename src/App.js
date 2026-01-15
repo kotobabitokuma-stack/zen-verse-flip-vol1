@@ -289,7 +289,33 @@ const buttonStyle = {
   opacity: 0.8
 };
 
-if (selectedDay === null) {
+// アプリ本体
+function AppWithPi({ user }) {
+  const [selectedDayIndex, setSelectedDayIndex] = useState(null);
+  const [showText, setShowText] = useState(false);
+  const [isTop, setIsTop] = useState(true);
+  const touchStartX = useRef(0);
+
+  const selectedDay = selectedDayIndex !== null ? days[selectedDayIndex] : null;
+
+  const handleSwipe = (direction) => {
+    if (selectedDayIndex === null) return;
+    if (direction === "left" && selectedDayIndex < days.length - 1) {
+      setSelectedDayIndex(selectedDayIndex + 1);
+      setShowText(false);
+    }
+    if (direction === "right") {
+      if (selectedDayIndex === 1) {
+        setIsTop(true);
+        setSelectedDayIndex(null);
+      } else if (selectedDayIndex > 1) {
+        setSelectedDayIndex(selectedDayIndex - 1);
+        setShowText(false);
+      }
+    }
+  };
+
+  if (selectedDay === null) {
     if (isTop) {
       return (
         <div style={{ textAlign: "center", padding: "10px" }}>
@@ -377,3 +403,4 @@ if (selectedDay === null) {
 if (!window.AppComponent) { window.AppComponent = AppWithPi; }
 const root = ReactDOM.createRoot(document.getElementById("root"));
 root.render(<AppWithPi user={window.piUser} />);
+export default AppWithPi;
