@@ -1,7 +1,9 @@
 {
-  "name": "pi-calendar",
-  "version": "0.1.0",
+  "name": "zen-verse-flip-v1",
+  "version": "1.0.0",
   "private": true,
+  "description": "Daily Digital Flip Art - Part of the KBK Economic Zone",
+  "author": "kotobabito",
   "dependencies": {
     "@testing-library/dom": "^10.4.1",
     "@testing-library/jest-dom": "^6.9.1",
