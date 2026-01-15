@@ -1,120 +1,37 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="utf-8" />
-    <title>Zen Verse Flip</title>
-    <style>
-      body { margin: 0; padding: 0 0 100px; font-family: sans-serif; text-align: center; }
-      #banner-ad {
-        position: fixed;
-        bottom: 0;
-        left: 0;
-        width: 100%;
-        height: 60px;
-        background: #eee;
-        line-height: 60px;
-        border-top: 1px solid #ccc;
-        z-index: 100;
-      }
-    </style>
-  </head>
-  <body>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Zen Verse Flip</title>
+    <style>
+      body { margin: 0; padding: 0; font-family: sans-serif; background-color: #f5f5f5; }
+      #banner-ad {
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        width: 100%;
+        height: 60px;
+        background: #eee;
+        line-height: 60px;
+        border-top: 1px solid #ccc;
+        text-align: center;
+        z-index: 100;
+      }
+    </style>
+  </head>
+  <body>
+    <script src="https://sdk.minepi.com/pi-sdk.js"></script>
+    <script>
+      // 初期化だけここで確実に行うわ！
+      if (window.Pi) {
+        Pi.init({ version: "2.0", appId: "zen-verse-flip-vol-1-aff488a9804cc5e0" });
+      }
+    </script>
 
-        <script src="https://sdk.minepi.com/pi-sdk.js"></script>
+    <div id="root"></div>
 
-        <script>
-      
-      // App IDと変数名を最終修正済み！
-      Pi.init({ version: "2.0", appId: "zen-verse-flip-vol-1-aff488a9804cc5e0" });
+    <div id="banner-ad">ここにバナー広告が表示されます</div>
 
-            async function authenticateUser() {
-        if (!window.Pi) {
-          alert("Pi Browserで開いてください！");
-          return false;
-        }
-        try {
-          const scopes = ['payments']; // 決済スコープ必須！
-          await Pi.authenticate(scopes, onIncompletePaymentFound);
-          console.log("認証成功！決済OK！");
-          return true;
-        } catch (error) {
-          alert("認証エラー: " + error.message);
-          console.error(error);
-          return false;
-        }
-      }
-
-            function onIncompletePaymentFound(payment) {
-        console.log("未完了決済発見:", payment);
-        // テストなので何もしない
-      }
-
-            window.addEventListener('DOMContentLoaded', () => {
-        const banner = document.getElementById('banner-ad');
-        if (banner) {
-          banner.textContent = 'ここにバナー広告が表示されます';
-        }
-        // ページロード時に自動認証
-        authenticateUser();
-      });
-    </script>
-
-        <div id="root"></div>
-
-        <div id="banner-ad"></div>
-
-        <div style="position:fixed; bottom:80px; left:50%; transform:translateX(-50%); z-index:999; background:rgba(0,0,0,0.7); padding:10px; border-radius:12px;">
-      <button onclick="runTestPayment()" style="padding:12px 24px; background:#5f3dc4; color:white; border:none; border-radius:8px; font-weight:bold; font-size:16px;">
-        決済テスト実行（審査用）
-      </button>
-    </div>
-
-    <script>
-    async function runTestPayment() {
-  if (!window.Pi) {
-    alert("Pi Browserで開いてください！");
-    return;
-  }
-
-  const authenticated = await authenticateUser();
-  if (!authenticated) return;
-
-  try {
-    // ⭐ 矛盾するSDKの要求を満たすため、4つのコールバックを全て記述！ ⭐
-    Pi.createPayment(
-      {
-        amount: 1.0,                                                   // 0 Pi
-        memo: "Zen Verse Flip - 今日の禅の言葉（無料アクセス）",         // memo必須
-        metadata: { app: "zen_verse_flip", purpose: "free_daily_access" }  
-      },
-      {
-        onReadyForServerApproval(paymentId) {
-          // SDKの要求を満たすために、空で残します。
-          console.log("サーバー承認待ち (SDK要求)", paymentId);
-        },
-
-        onReadyForServerCompletion: function(paymentId, txid) {
-          // SDKの要求を満たしつつ、クライアント側で完了処理を強制実行
-          console.log("無料決済完了！ (SDK要求)", paymentId, txid);
-          Pi.completePayment(paymentId, txid);
-          alert("決済成功！ポータルに戻ってChecklistを確認してください！");
-        },
-
-        onCancel(paymentId) {
-          console.log("キャンセルされました", paymentId);
-          alert("無料アクセスを許可してください");
-        },
-
-        onError(error, payment) {
-          console.error("決済エラー", error);
-          alert("エラー: " + error.message);
-        }
-      }
-    );
-  } catch (e) {
-    alert("予期せぬエラー: " + e.message);
-  }
-}
-    </script>
-  </body>
+  </body>
 </html>
