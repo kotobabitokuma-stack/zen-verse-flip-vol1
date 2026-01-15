@@ -233,10 +233,16 @@ const Pi = window.Pi;
 
 const handlePayment = async () => {
   try {
-    // 1. まずはユーザーを認証（これがないと決済画面が立ち上がらないわ！）
+// 1. まずはユーザーを認証
     const scopes = ['payments'];
-    const auth = await Pi.authenticate(scopes, (payment) => {
-      console.log("未完了の決済が見つかったわ:", payment);
+    const auth = await Pi.authenticate(scopes, async (payment) => {
+      // ⭐ 未完了の決済を見つけたら、その場でお掃除（完了報告）しちゃうわ！
+      try {
+        await Pi.completePayment(payment.identifier, payment.transaction.txid);
+        console.log("保留中だった決済を無事に完了させたわ！");
+      } catch (e) {
+        console.error("保留決済の完了エラー:", e);
+      }
     });
     
     console.log("認証成功！パイオニア名:", auth.user.username);
