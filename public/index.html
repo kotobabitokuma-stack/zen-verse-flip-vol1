@@ -2,31 +2,56 @@
 <html>
 <head>
     <meta charset="utf-8">
+    <title>Item 10 Recovery</title>
     <script src="https://sdk.minepi.com/pi-sdk.js"></script>
-    <script>
-        // 2. 読み込み後、即座に初期化を実行
-        function init() {
-            try {
-                // あえてバージョンを数値の 1 だけにする
-                window.Pi.init({ version: "1" });
-                window.Pi.authenticate(['username', 'payments'], function(p){})
-                .then(function(auth) {
-                    document.getElementById('status').innerText = "接続成功: " + auth.user.username;
-                    document.getElementById('pay-btn').style.display = "block";
-                })
-                .catch(function(e) {
-                    document.getElementById('status').innerText = "認証エラー: " + e.message;
-                });
-            } catch (e) {
-                // 失敗したらすぐに再試行
-                setTimeout(init, 1000);
-            }
-        }
-        window.onload = init;
-    </script>
 </head>
-<body>
-    <h1 id="status">Pi 接続待機中...</h1>
-    <button id="pay-btn" onclick="/* 決済処理 */" style="display:none; padding:20px; background:gold;">Support (3 Pi)</button>
+<body style="text-align:center; padding-top:50px; font-family:sans-serif;">
+    <h2>Zen Verse Flip 復旧テスト</h2>
+    
+    <div style="margin:20px; border:1px solid #ccc; padding:15px;">
+        <p>① まずここを押して。何も起きないように見えてもOK。</p>
+        <button onclick="window.Pi.init({version:'1.5'})" style="padding:10px 20px;">1. SDK初期化を叩く</button>
+    </div>
+
+    <div style="margin:20px; border:1px solid #ccc; padding:15px;">
+        <p>② 5秒くらい待ってから、ここを押して。</p>
+        <button onclick="runAuth()" style="padding:10px 20px; background:gold;">2. 認証してボタンを出す</button>
+    </div>
+
+    <div id="pay-area" style="display:none; margin-top:30px;">
+        <p>認証成功！このボタンで決済画面が出れば合格よ！</p>
+        <button onclick="runPay()" style="padding:20px; background:orange; font-weight:bold;">3. Pi決済テストを実行</button>
+    </div>
+
+    <p id="msg" style="color:red; margin-top:20px;"></p>
+
+    <script>
+        function runAuth() {
+            const msg = document.getElementById('msg');
+            window.Pi.authenticate(['username', 'payments'], function(p){})
+            .then(function(auth) {
+                msg.style.color = "green";
+                msg.innerText = "認証成功: " + auth.user.username;
+                document.getElementById('pay-area').style.display = "block";
+            })
+            .catch(function(e) {
+                msg.innerText = "エラー: " + e.message;
+            });
+        }
+
+        function runPay() {
+            window.Pi.createPayment({
+                amount: 3,
+                memo: "Item 10 Final",
+                metadata: { productId: "item10" }
+            }, {
+                onIncompletePaymentFound: (id) => window.Pi.completePayment(id, "manual_fix"),
+                onReadyForServerApproval: (id) => console.log("Approved"),
+                onReadyForServerCompletion: (id, txid) => window.Pi.completePayment(id, txid),
+                onCancel: () => {},
+                onError: (err) => alert(err.message)
+            });
+        }
+    </script>
 </body>
 </html>
