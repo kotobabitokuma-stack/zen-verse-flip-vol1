@@ -227,11 +227,11 @@ So, live boldly, shine brightly, and embrace happiness.
 There’s no need to hold back in your life.` }
 ];
 
-// --- Pi SDK 決済ロジック ---
+import React, { useState, useRef } from 'react';
 
+// --- ここから Pi SDK 決済ロジック ---
 const handlePayment = async () => {
   alert("1. 処理開始！");
-  // 💡 ここで window.Pi を「piInstance」という名前に固定しちゃうわ！
   const piInstance = window.Pi;
 
   try {
@@ -240,16 +240,12 @@ const handlePayment = async () => {
       return;
     }
 
-    alert("2. 初期化中...");
     await piInstance.init({ version: "2.0", sandbox: false });
-    
-    alert("3. 認証へ..."); 
+    alert("2. 認証へ..."); 
     const auth = await piInstance.authenticate(['payments']);
-    alert("3.5 認証OK: " + auth.user.username);
+    alert("3. 認証OK: " + auth.user.username);
 
-alert("4. 強制お掃除モード開始！");
-    
-    // 💡 どっちの名前でも動くように欲張りにチェックするわよ
+    alert("4. 強制お掃除モード開始！");
     const getIncomplete = piInstance.getIncompletePayment || piInstance.get_incomplete_payment;
     
     if (typeof getIncomplete === 'function') {
@@ -261,22 +257,18 @@ alert("4. 強制お掃除モード開始！");
         return;
       }
     } else {
-      // 💡 【最終奥義】もし道具が見つからないなら、エラーを無視して直接「完了」を投げちゃう！
       alert("4.5 道具がないから、直接完了を試みるわ（荒業）");
-      // このエラーが出ているということは、サーバー側に決済IDが残っているはずなの。
     }
 
-   alert("6. いよいよ決済画面よ！");
+    alert("6. いよいよ決済画面よ！");
     await piInstance.createPayment({
       amount: 3.0,
       memo: "Support Zen Verse Flip Vol.1",
       metadata: { productId: "zen_verse_flip_v4" },
     }, {
-      // 🔴 ここが「掃除の窓口」！これを足すことでさっきのエラーを回避するわ
       onIncompletePaymentFound: async (paymentId) => {
         alert("未完了決済 ID: " + paymentId + " を発見！今からお掃除するわね。");
         try {
-          // 💡 ここでサーバー側の承認が必要な場合があるけど、まずは完了を試みるわ
           await piInstance.completePayment(paymentId, "manual_fix"); 
           alert("お掃除完了！もう一度ボタンを押してみて！");
         } catch (e) {
@@ -297,23 +289,20 @@ alert("4. 強制お掃除モード開始！");
       onCancel: (id) => alert("キャンセル"),
       onError: (err) => alert("決済エラー: " + err.message)
     });
-// --- ここから下はゆうきくんが送ってくれたUIコード ---
 
-// PiUserBadge
+  } catch (err) {
+    alert("致命的エラー: " + err.message);
+  }
+};
+
+// --- ここから UIコンポーネント ---
+
 function PiUserBadge({ user }) {
   if (!user) return null;
   return (
     <div style={{
-      position: "fixed",
-      top: 15,
-      right: 15,
-      background: "#5B45FF",
-      color: "white",
-      padding: "8px 14px",
-      borderRadius: "20px",
-      fontSize: "14px",
-      fontWeight: "bold",
-      zIndex: 1000
+      position: "fixed", top: 15, right: 15, background: "#5B45FF", color: "white",
+      padding: "8px 14px", borderRadius: "20px", fontSize: "14px", fontWeight: "bold", zIndex: 1000
     }}>
       {user.username}
     </div>
@@ -321,18 +310,12 @@ function PiUserBadge({ user }) {
 }
 
 const buttonStyle = {
-  padding: "6px 12px",
-  fontSize: "14px",
-  background: "transparent",
-  color: "#555",
-  border: "1px solid #ccc",
-  borderRadius: "8px",
-  cursor: "pointer",
-  opacity: 0.8
+  padding: "6px 12px", fontSize: "14px", background: "transparent", color: "#555",
+  border: "1px solid #ccc", borderRadius: "8px", cursor: "pointer", opacity: 0.8
 };
 
-// アプリ本体
-function AppWithPi({ user }) {
+// --- アプリ本体の定義 ---
+function AppWithPi({ user, days }) { // daysを受け取れるように修正
   const [selectedDayIndex, setSelectedDayIndex] = useState(null);
   const [showText, setShowText] = useState(false);
   const [isTop, setIsTop] = useState(true);
@@ -368,30 +351,19 @@ function AppWithPi({ user }) {
             onClick={() => setIsTop(false)}
           />
           <p style={{ marginTop: "12px", fontSize: "18px", color: "#666" }}>Tap to Start</p>
-          
           <button 
             onClick={(e) => { e.stopPropagation(); handlePayment(); }}
             style={{ 
-              ...buttonStyle, 
-              background: "#FFD700", 
-              color: "#000", 
-              fontWeight: "bold", 
-              marginTop: "10px",
-              marginBottom: "80px",
-              padding: "12px 24px",
-              opacity: 1,
-              position: "relative",
-              zIndex: 1001
+              ...buttonStyle, background: "#FFD700", color: "#000", fontWeight: "bold", 
+              marginTop: "10px", marginBottom: "80px", padding: "12px 24px", opacity: 1, position: "relative", zIndex: 1001
             }}
           >
             Support this App (3 Pi)
           </button>
-          
           <PiUserBadge user={user} />
         </div>
       );
     }
-
     return (
       <div style={{ textAlign: "center", padding: "10px" }}>
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(70px, 1fr))", gap: "10px", justifyItems: "center", marginBottom: "20px" }}>
@@ -431,14 +403,9 @@ function AppWithPi({ user }) {
           </div>
         )}
       </div>
-
       <div style={{ position: "fixed", bottom: "80px", left: 0, width: "100%", display: "flex", justifyContent: "space-between", padding: "0 12px", boxSizing: "border-box", zIndex: 200 }}>
-        <div style={{ flex: 1, display: "flex", justifyContent: "flex-start" }}>
-          <button onClick={() => { setSelectedDayIndex(null); setShowText(false); }} style={buttonStyle}>All Days</button>
-        </div>
-        <div style={{ flex: 1, display: "flex", justifyContent: "flex-end" }}>
-          <button onClick={() => { setSelectedDayIndex(null); setShowText(false); setIsTop(true); }} style={buttonStyle}>Top</button>
-        </div>
+        <button onClick={() => { setSelectedDayIndex(null); setShowText(false); }} style={buttonStyle}>All Days</button>
+        <button onClick={() => { setSelectedDayIndex(null); setShowText(false); setIsTop(true); }} style={buttonStyle}>Top</button>
       </div>
       <PiUserBadge user={user} />
     </div>
