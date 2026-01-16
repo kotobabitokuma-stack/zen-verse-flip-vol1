@@ -231,55 +231,61 @@ There’s no need to hold back in your life.` }
 
 const handlePayment = async () => {
   alert("1. 処理開始！");
+  // 💡 ここで window.Pi を「piInstance」という名前に固定しちゃうわ！
+  const piInstance = window.Pi;
+
   try {
-    if (!window.Pi) {
-      alert("SDKがありません。");
+    if (!piInstance) {
+      alert("SDKが見つからないわ。ブラウザを更新してね。");
       return;
     }
 
-    await window.Pi.init({ version: "2.0", sandbox: false });
+    alert("2. 初期化中...");
+    await piInstance.init({ version: "2.0", sandbox: false });
     
-    alert("2. 認証へ..."); 
-    const auth = await window.Pi.authenticate(['payments']);
-    alert("3. 認証OK: " + auth.user.username);
+    alert("3. 認証へ..."); 
+    const auth = await piInstance.authenticate(['payments']);
+    alert("3.5 認証OK: " + auth.user.username);
 
-    // 🧹 お掃除（未完了決済のチェック）を復活させるわよ！
-    alert("4. 残っている決済がないかチェックするわね");
-    
-    // 💡 window.Pi.getIncompletePayment を使うわ
-    const incomplete = await window.Pi.getIncompletePayment();
-    
-    if (incomplete) {
-      alert("5. 過去の未完了決済を見つけたわ！これをお掃除するわね。");
-      // 過去の決済を完了（またはキャンセル）させる儀式
-      await window.Pi.completePayment(incomplete.paymentId, incomplete.transaction.txid);
-      alert("お掃除完了！もう一度ボタンを押せば、新しい決済ができるわよ。");
-      return; // 一旦ここで終了
+    alert("4. お掃除チェック...");
+    // 💡 window.Pi ではなく、固定した piInstance を使うのよ！
+    if (typeof piInstance.getIncompletePayment === 'function') {
+      const incomplete = await piInstance.getIncompletePayment();
+      
+      if (incomplete) {
+        alert("5. 未完了をお掃除するわね");
+        await piInstance.completePayment(incomplete.paymentId, incomplete.transaction.txid);
+        alert("お掃除完了！もう一度押してね。");
+        return;
+      }
+    } else {
+      // 💡 もしこれが出たら、SDKが古すぎて関数自体が存在していない証拠
+      alert("エラー：お掃除機能がSDK内に見つかりません。");
     }
 
-    alert("6. 新しい決済画面を呼び出すわよ！");
-    await window.Pi.createPayment({
+    alert("6. いよいよ決済画面よ！");
+    await piInstance.createPayment({
       amount: 3.0,
       memo: "Support Zen Verse Flip Vol.1",
       metadata: { productId: "zen_verse_flip_v4" },
     }, {
-      onReadyForServerApproval: async (paymentId) => {
-        await fetch('/api/approve', {
+      onReadyForServerApproval: (paymentId) => {
+        fetch('/api/approve', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ paymentId }),
         });
       },
-      onReadyForServerCompletion: async (paymentId, txid) => {
-        await window.Pi.completePayment(paymentId, txid);
+      onReadyForServerCompletion: (paymentId, txid) => {
+        piInstance.completePayment(paymentId, txid);
         alert("決済完了！ありがとう！");
       },
-      onCancel: (id) => alert("キャンセルされました"),
-      onError: (err) => alert("決済画面エラー: " + err.message)
+      onCancel: (id) => alert("キャンセル"),
+      onError: (err) => alert("決済エラー: " + err.message)
     });
 
   } catch (err) {
-    alert("エラー発生: " + err.message);
+    alert("致命的エラー: " + err.message);
   }
 };
 // --- ここから下はゆうきくんが送ってくれたUIコード ---
