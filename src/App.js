@@ -229,7 +229,7 @@ There’s no need to hold back in your life.` }
 
 import React, { useState, useRef } from 'react';
 
-// --- ここから Pi SDK 決済ロジック ---
+// --- Pi SDK 決済ロジック ---
 const handlePayment = async () => {
   alert("1. 処理開始！");
   const piInstance = window.Pi;
@@ -257,7 +257,7 @@ const handlePayment = async () => {
         return;
       }
     } else {
-      alert("4.5 道具がないから、直接完了を試みるわ（荒業）");
+      alert("4.5 道具がないから、直接完了を試みるわ");
     }
 
     alert("6. いよいよ決済画面よ！");
@@ -267,12 +267,12 @@ const handlePayment = async () => {
       metadata: { productId: "zen_verse_flip_v4" },
     }, {
       onIncompletePaymentFound: async (paymentId) => {
-        alert("未完了決済 ID: " + paymentId + " を発見！今からお掃除するわね。");
+        alert("未完了決済 ID: " + paymentId + " を発見！お掃除するわね。");
         try {
           await piInstance.completePayment(paymentId, "manual_fix"); 
           alert("お掃除完了！もう一度ボタンを押してみて！");
         } catch (e) {
-          alert("お掃除中にエラー: " + e.message);
+          alert("お掃除エラー: " + e.message);
         }
       },
       onReadyForServerApproval: (paymentId) => {
@@ -295,8 +295,7 @@ const handlePayment = async () => {
   }
 };
 
-// --- ここから UIコンポーネント ---
-
+// --- UIコンポーネント ---
 function PiUserBadge({ user }) {
   if (!user) return null;
   return (
@@ -314,12 +313,18 @@ const buttonStyle = {
   border: "1px solid #ccc", borderRadius: "8px", cursor: "pointer", opacity: 0.8
 };
 
-// --- アプリ本体の定義 ---
-function AppWithPi({ user, days }) { // daysを受け取れるように修正
+// --- アプリ本体 ---
+// 💡 daysはApp.jsの外（index.jsなど）で定義されている前提よ
+function AppWithPi({ user, days }) {
   const [selectedDayIndex, setSelectedDayIndex] = useState(null);
   const [showText, setShowText] = useState(false);
   const [isTop, setIsTop] = useState(true);
   const touchStartX = useRef(0);
+
+  // daysが未定義の場合のエラー防止
+  if (!days || days.length === 0) {
+    return <div>Loading calendar data...</div>;
+  }
 
   const selectedDay = selectedDayIndex !== null ? days[selectedDayIndex] : null;
 
