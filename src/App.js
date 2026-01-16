@@ -245,12 +245,15 @@ const handlePayment = async () => {
     
     alert("3. 認証成功！こんにちは、" + auth.user.username + "さん！");
 
-    // 🧹 お掃除（未完了決済のチェック）
+   // 🧹 お掃除（未完了決済のチェック）
     alert("4. 未完了決済がないかチェックするわね");
-    const incomplete = await Pi.getIncompletePayment();
+    
+    // window.Pi を明示的に使うわよ
+    const incomplete = await window.Pi.getIncompletePayment(); 
     if (incomplete) {
       alert("5. 未完了があったから片付けるわ");
-      await Pi.completePayment(incomplete.paymentId, incomplete.transaction.txid);
+      // 👇 ここも window. をつけると安心！
+      await window.Pi.completePayment(incomplete.paymentId, incomplete.transaction.txid);
       alert("お掃除完了！もう一度ボタンを押してね。");
       return;
     }
@@ -259,7 +262,7 @@ const handlePayment = async () => {
     // ...この後に Pi.createPayment が続く
 
     // 🚀 儀式3：新しい決済リクエスト（これ1つだけに絞ったわ！）
-    await Pi.createPayment({
+  await window.Pi.createPayment({
       amount: 3.0,
       memo: "Support Zen Verse Flip Vol.1",
       metadata: { productId: "zen_verse_flip_v4" },
