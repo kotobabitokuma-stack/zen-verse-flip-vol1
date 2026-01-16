@@ -230,36 +230,26 @@ There’s no need to hold back in your life.` }
 // --- Pi SDK 決済ロジック ---
 
 const handlePayment = async () => {
-  alert("1. 処理開始よ！");
+  alert("1. 処理開始！");
   try {
-    // ⏳ 儀式A：Pi SDKが読み込まれているかチェック
     if (!window.Pi) {
-      alert("SDKが見つかりません。ブラウザを更新してね。");
+      alert("SDKがありません。");
       return;
     }
 
-    // ⏳ 儀式B：ここで一気に初期化！
-    // 💡 sandbox: false になっているか確認してね（本番用）
+    // 初期化
     await window.Pi.init({ version: "2.0", sandbox: false });
     
-    alert("2. 認証を開始するわよ..."); 
+    alert("2. 認証へ..."); 
     const auth = await window.Pi.authenticate(['payments']);
-    alert("3. 認証成功: " + auth.user.username);
+    alert("3. 認証OK: " + auth.user.username);
 
-    // 🧹 お掃除（未完了チェック）
-    alert("4. 未完了チェック...");
-    
-    // index.htmlの初期化を消したから、これで正しく動くはずよ！
-    const incomplete = await window.Pi.getIncompletePayment();
-    
-    if (incomplete) {
-      alert("5. 未完了を片付けるわね");
-      await window.Pi.completePayment(incomplete.paymentId, incomplete.transaction.txid);
-      alert("お掃除完了！もう一度ボタンを押してね。");
-      return;
-    }
+    // 🔴 ゆうきくん、ここを見て！
+    // 前のコードで「4番」のアラートがあった場所を、
+    // まるごと消して、いきなり「6番」に飛ぶようにしたわよ！
 
-    alert("6. いよいよ決済画面よ！");
+    alert("6. いよいよ決済画面(createPayment)を呼び出すわよ！");
+    
     await window.Pi.createPayment({
       amount: 3.0,
       memo: "Support Zen Verse Flip Vol.1",
@@ -276,15 +266,15 @@ const handlePayment = async () => {
         window.Pi.completePayment(paymentId, txid);
         alert("決済完了！ありがとう！");
       },
-      onCancel: (id) => console.log("キャンセル"),
-      onError: (err) => alert("決済エラー: " + err.message)
+      onCancel: (id) => alert("キャンセルされました"),
+      onError: (err) => alert("決済画面エラー: " + err.message)
     });
 
   } catch (err) {
-    alert("エラー発生: " + err.message);
+    // 💡 ここでエラーが出るなら、createPaymentすら読み込めていないことになるわ
+    alert("致命的エラー: " + err.message);
   }
 };
-
 // --- ここから下はゆうきくんが送ってくれたUIコード ---
 
 // PiUserBadge
