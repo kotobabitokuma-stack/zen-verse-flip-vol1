@@ -229,38 +229,6 @@ There’s no need to hold back in your life.` }
 
 
 // --- Pi SDK 決済ロジック ---
-const handlePayment = async () => {
-  const pi = window.Pi;
-  if (!pi) return;
-
-  try {
-    await pi.init({ version: "2.0", sandbox: false });
-
-    await pi.createPayment({
-      amount: 3.14,
-      memo: "Support Zen Verse Flip Vol.1",
-      metadata: { productId: "zen_verse_flip_v1" },
-    }, {
-      // 💡 公式が推奨する「未完了決済」の唯一の正しい窓口
-      onIncompletePaymentFound: (id) => pi.completePayment(id, "manual_fix"),
-      
-      onReadyForServerApproval: (id) => {
-        console.log("Approved:", id);
-        // 本来はここでバックエンドを叩くけれど、まずはフロントで完結させるわ
-      },
-      
-      onReadyForServerCompletion: (id, txid) => {
-        pi.completePayment(id, txid);
-        alert("決済が完了しました！ありがとうございます！");
-      },
-      
-      onCancel: (id) => {},
-      onError: (err) => alert("エラーが発生しました。時間を置いて再度お試しください。")
-    });
-  } catch (err) {
-    console.error(err);
-  }
-};
 
 // --- UIコンポーネント ---
 function PiUserBadge({ user }) {
@@ -286,6 +254,31 @@ function AppWithPi({ user }) {
   const [showText, setShowText] = useState(false);
   const [isTop, setIsTop] = useState(true);
   const touchStartX = useRef(0);
+
+  // 💡 ここに handlePayment を引っ越しさせるの！
+  const handlePayment = async () => {
+    const pi = window.Pi;
+    if (!pi) return;
+    try {
+      await pi.init({ version: "2.0", sandbox: false });
+      await pi.createPayment({
+        amount: 3.14,
+        memo: "Support Zen Verse Flip Vol.1",
+        metadata: { productId: "zen_verse_flip_v1" },
+      }, {
+        onIncompletePaymentFound: (id) => pi.completePayment(id, "manual_fix"),
+        onReadyForServerApproval: (id) => console.log("Approved:", id),
+        onReadyForServerCompletion: (id, txid) => {
+          pi.completePayment(id, txid);
+          alert("決済が完了しました！ありがとうございます！");
+        },
+        onCancel: (id) => {},
+        onError: (err) => alert("エラー: " + err.message)
+      });
+    } catch (err) {
+      console.error(err);
+    }
+  };
 
   // ✅ 1. 自動お掃除機能（ここで完結するように閉じカッコを整理したわ）
   useEffect(() => {
