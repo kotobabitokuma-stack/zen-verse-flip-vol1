@@ -236,31 +236,30 @@ if (Pi) {
 }
 
 const handlePayment = async () => {
-  // ...（以下、ゆうきくんのhandlePaymentの中身）
   try {
     const scopes = ['payments'];
     
-    // 💥 儀式1：認証時に「完了しているのに残っているデータ」を強制的に片付ける
-    const auth = await Pi.authenticate(scopes, async (payment) => {
-      try {
-        await Pi.completePayment(payment.identifier, payment.transaction.txid);
-        console.log("同期ズレを起こしていた決済を正常にクローズしたわ！");
-      } catch (e) {
-        console.error("お掃除は不要だったみたいね。次へ行くわよ。");
-      }
-    });
-
+    // 💥 儀式1：認証（シンプルにログイン！）
+    const auth = await Pi.authenticate(scopes);
     console.log("認証成功！パイオニア:", auth.user.username);
 
-    const incomplete = await Pi.getIncompletePayment();
-if (incomplete) {
-  await Pi.completePayment(incomplete.paymentId, incomplete.transaction.txid);
-}
-    // 🚀 儀式2：新しい決済リクエストを投げる
+    // 🧹 儀式2：お掃除
+    try {
+      const incomplete = await Pi.getIncompletePayment();
+      if (incomplete) {
+        await Pi.completePayment(incomplete.paymentId, incomplete.transaction.txid);
+        alert("前回の決済を片付けたわ！もう一度ボタンを押してみて！");
+        return; 
+      }
+    } catch (e) {
+      console.log("お掃除チェック完了（異常なし）");
+    }
+
+    // 🚀 儀式3：新しい決済リクエスト（これ1つだけに絞ったわ！）
     await Pi.createPayment({
       amount: 3.0,
       memo: "Support Zen Verse Flip Vol.1",
-      metadata: { productId: "zen_verse_flip_v4" }, // ◀ここをv3にしているのがポイントよ
+      metadata: { productId: "zen_verse_flip_v4" },
     }, {
       onReadyForServerApproval: async (paymentId) => {
         await fetch('/api/approve', {
@@ -280,12 +279,12 @@ if (incomplete) {
       onCancel: (paymentId) => console.log("キャンセル:", paymentId),
       onError: (error, paymentId) => {
         console.error("エラー:", error);
-        alert("通信が不安定かも？入金を確認してみてね！\n" + error.message);
+        alert("エラーが発生したわ: " + error.message);
       },
     });
   } catch (err) {
     console.error("認証失敗:", err);
-    alert("Pi Browserを一度閉じて開き直してみて！");
+    alert("エラーが発生したわよ: " + err.message);
   }
 };
 
