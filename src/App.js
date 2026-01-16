@@ -75,7 +75,6 @@ function App() {
   const [user, setUser] = useState(null);
   const [selectedDayIndex, setSelectedDayIndex] = useState(null);
   const [showText, setShowText] = useState(false);
-  const touchStartX = useRef(0);
 
   // 初期化と認証
   useEffect(() => {
