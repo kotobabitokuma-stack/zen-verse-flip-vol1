@@ -1,5 +1,4 @@
 import React, { useState, useRef } from "react";
-import ReactDOM from "react-dom/client";
 
 // --- 画像インポート部分はそのまま維持 ---
 import top01 from "./assets/images/top01.png";
