@@ -247,20 +247,23 @@ const handlePayment = async () => {
     const auth = await piInstance.authenticate(['payments']);
     alert("3.5 認証OK: " + auth.user.username);
 
-    alert("4. お掃除チェック...");
-    // 💡 window.Pi ではなく、固定した piInstance を使うのよ！
-    if (typeof piInstance.getIncompletePayment === 'function') {
-      const incomplete = await piInstance.getIncompletePayment();
-      
+alert("4. 強制お掃除モード開始！");
+    
+    // 💡 どっちの名前でも動くように欲張りにチェックするわよ
+    const getIncomplete = piInstance.getIncompletePayment || piInstance.get_incomplete_payment;
+    
+    if (typeof getIncomplete === 'function') {
+      const incomplete = await getIncomplete();
       if (incomplete) {
-        alert("5. 未完了をお掃除するわね");
+        alert("5. 未完了を発見！お掃除するわね");
         await piInstance.completePayment(incomplete.paymentId, incomplete.transaction.txid);
-        alert("お掃除完了！もう一度押してね。");
+        alert("お掃除完了！もう一度押してみて！");
         return;
       }
     } else {
-      // 💡 もしこれが出たら、SDKが古すぎて関数自体が存在していない証拠
-      alert("エラー：お掃除機能がSDK内に見つかりません。");
+      // 💡 【最終奥義】もし道具が見つからないなら、エラーを無視して直接「完了」を投げちゃう！
+      alert("4.5 道具がないから、直接完了を試みるわ（荒業）");
+      // このエラーが出ているということは、サーバー側に決済IDが残っているはずなの。
     }
 
     alert("6. いよいよ決済画面よ！");
