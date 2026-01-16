@@ -1,4 +1,4 @@
-import React, { useState, useRef } from "react";
+import React, { useState, useRef } from 'react';
 
 // --- 画像インポート部分はそのまま維持 ---
 import top01 from "./assets/images/top01.png";
@@ -227,7 +227,6 @@ So, live boldly, shine brightly, and embrace happiness.
 There’s no need to hold back in your life.` }
 ];
 
-import React, { useState, useRef } from 'react';
 
 // --- Pi SDK 決済ロジック ---
 const handlePayment = async () => {
