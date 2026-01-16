@@ -1,37 +1,66 @@
 <!DOCTYPE html>
 <html>
 <head>
+    <meta charset="utf-8">
     <title>Zen Verse Flip - Item 10</title>
     <script src="https://sdk.minepi.com/pi-sdk.js"></script>
+    <style>
+        body { text-align: center; padding-top: 100px; font-family: sans-serif; }
+        #pay-button { padding: 20px 40px; font-size: 20px; background: #ccc; border: none; border-radius: 10px; cursor: not-allowed; }
+        .ready { background: gold !important; cursor: pointer !important; }
+    </style>
+</head>
+<body>
+    <h1>Zen Verse Flip</h1>
+    <p id="status">SDKを読み込み中...</p>
+    <div id="user">ユーザー認証待ち...</div>
+    <br>
+    <button id="pay-button" onclick="pay()" disabled>Support (3 Pi)</button>
+
     <script>
-        window.onload = function() {
-            // バージョン指定なしの最も原始的な初期化
-            window.Pi.init({ version: "1.5" }); 
-            window.Pi.authenticate(['username', 'payments'], function(p){})
-                .then(function(auth) {
-                    document.getElementById('user').innerText = "Hi, " + auth.user.username;
-                });
-        };
+        const btn = document.getElementById('pay-button');
+        const status = document.getElementById('status');
+        const userDiv = document.getElementById('user');
+
+        function initPi() {
+            if (!window.Pi) {
+                status.innerText = "Piブラウザで開いてください";
+                return;
+            }
+
+            // バージョン1.5で初期化。失敗を考慮してあえて.thenで繋ぐわ
+            window.Pi.init({ version: "1.5" });
+            
+            status.innerText = "認証中...";
+            
+            window.Pi.authenticate(['username', 'payments'], function(payment) {
+                console.log("incomplete payment:", payment);
+            }).then(function(auth) {
+                userDiv.innerText = "Hi, " + auth.user.username;
+                status.innerText = "接続完了！ボタンを押してね";
+                btn.disabled = false;
+                btn.className = "ready";
+            }).catch(function(err) {
+                status.innerText = "エラー: " + err.message;
+            });
+        }
 
         function pay() {
             window.Pi.createPayment({
                 amount: 3,
-                memo: "Checklist Item 10",
-                metadata: { productId: "test" }
+                memo: "Checklist Item 10 Test",
+                metadata: { productId: "item_10" }
             }, {
                 onIncompletePaymentFound: (id) => window.Pi.completePayment(id, "manual_fix"),
                 onReadyForServerApproval: (id) => console.log("Approved"),
                 onReadyForServerCompletion: (id, txid) => window.Pi.completePayment(id, txid),
                 onCancel: () => {},
-                onError: (err) => alert(err.message)
+                onError: (err) => alert("決済エラー: " + err.message)
             });
         }
+
+        // ページ読み込み完了後、少し待ってからSDKを叩く（これが確実よ）
+        setTimeout(initPi, 1000);
     </script>
-</head>
-<body style="text-align:center; padding-top:50px;">
-    <h1>Zen Verse Flip</h1>
-    <div id="user">Loading Pi...</div>
-    <br>
-    <button onclick="pay()" style="padding:20px; background:gold;">Support (3 Pi)</button>
 </body>
 </html>
