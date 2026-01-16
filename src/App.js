@@ -228,41 +228,39 @@ There’s no need to hold back in your life.` }
 ];
 
 // --- Pi SDK 決済ロジック ---
-const Pi = window.Pi;
-
-// 🟢 ここを追加！
-if (Pi) {
-  Pi.init({ version: "2.0", sandbox: false });
-}
 
 const handlePayment = async () => {
-  alert("1. 処理開始よ！"); // これが出ればボタンはOK
+  alert("1. 処理開始よ！");
   try {
-    const scopes = ['payments'];
+    // ⏳ 儀式A：Pi SDKが読み込まれているかチェック
+    if (!window.Pi) {
+      alert("Pi SDKが見つからないわ。ブラウザを更新してみて！");
+      return;
+    }
+
+    // ⏳ 儀式B：ボタンを押した瞬間に「初期化」を実行して、終わるまで待つ！
+    // これを中に入れることで、4番のエラーを防げるわ。
+    await window.Pi.init({ version: "2.0", sandbox: false });
     
+    const scopes = ['payments'];
     alert("2. 認証(authenticate)を呼び出すわよ..."); 
-    const auth = await Pi.authenticate(scopes);
+    const auth = await window.Pi.authenticate(scopes);
     
     alert("3. 認証成功！こんにちは、" + auth.user.username + "さん！");
 
-   // 🧹 お掃除（未完了決済のチェック）
+    // 🧹 お掃除（未完了決済のチェック）
     alert("4. 未完了決済がないかチェックするわね");
     
-    // window.Pi を明示的に使うわよ
-    const incomplete = await window.Pi.getIncompletePayment(); 
+    const incomplete = await window.Pi.getIncompletePayment();
     if (incomplete) {
       alert("5. 未完了があったから片付けるわ");
-      // 👇 ここも window. をつけると安心！
       await window.Pi.completePayment(incomplete.paymentId, incomplete.transaction.txid);
       alert("お掃除完了！もう一度ボタンを押してね。");
       return;
     }
 
     alert("6. いよいよ新しい決済を作るわよ！");
-    // ...この後に Pi.createPayment が続く
-
-    // 🚀 儀式3：新しい決済リクエスト（これ1つだけに絞ったわ！）
-  await window.Pi.createPayment({
+    await window.Pi.createPayment({
       amount: 3.0,
       memo: "Support Zen Verse Flip Vol.1",
       metadata: { productId: "zen_verse_flip_v4" },
@@ -276,7 +274,7 @@ const handlePayment = async () => {
       },
       onReadyForServerCompletion: async (paymentId, txid) => {
         try {
-          await Pi.completePayment(paymentId, txid);
+          await window.Pi.completePayment(paymentId, txid);
           alert("Thank you! 決済が完全に完了しました！");
         } catch (e) {
           console.error("完了報告エラー:", e);
@@ -288,11 +286,14 @@ const handlePayment = async () => {
         alert("エラーが発生したわ: " + error.message);
       },
     });
+
   } catch (err) {
     console.error("認証失敗:", err);
     alert("エラーが発生したわよ: " + err.message);
   }
 };
+
+// --- ここから下はゆうきくんが送ってくれたUIコード ---
 
 // PiUserBadge
 function PiUserBadge({ user }) {
