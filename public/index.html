@@ -2,54 +2,60 @@
 <html>
 <head>
     <meta charset="utf-8">
-    <title>Zen Verse Flip - Item 10</title>
+    <title>Item 10 Test</title>
     <script src="https://sdk.minepi.com/pi-sdk.js"></script>
     <style>
-        body { text-align: center; padding-top: 100px; font-family: sans-serif; }
-        #pay-button { padding: 20px 40px; font-size: 20px; background: #ccc; border: none; border-radius: 10px; cursor: not-allowed; }
-        .ready { background: gold !important; cursor: pointer !important; }
+        body { text-align: center; padding-top: 50px; font-family: sans-serif; line-height: 1.6; }
+        .step { margin: 20px; padding: 15px; border: 1px solid #ddd; border-radius: 10px; }
+        button { padding: 15px 30px; font-size: 18px; cursor: pointer; border: none; border-radius: 5px; }
+        .init-btn { background: #2196F3; color: white; }
+        .pay-btn { background: #FFD700; color: black; display: none; }
     </style>
 </head>
 <body>
-    <h1>Zen Verse Flip</h1>
-    <p id="status">SDKを読み込み中...</p>
-    <div id="user">ユーザー認証待ち...</div>
-    <br>
-    <button id="pay-button" onclick="pay()" disabled>Support (3 Pi)</button>
+    <h2>Checklist Item 10 突破用</h2>
+
+    <div class="step">
+        <p>Step 1: まずはSDKを繋ぐわ</p>
+        <button id="init-btn" class="init-btn" onclick="runInit()">1. SDK初期化</button>
+        <p id="init-status" style="color: blue;"></p>
+    </div>
+
+    <div class="step" id="pay-step">
+        <p>Step 2: 決済テストよ</p>
+        <button id="pay-btn" class="pay-btn" onclick="runPay()">2. 決済ボタンを押す</button>
+        <p id="pay-status"></p>
+    </div>
 
     <script>
-        const btn = document.getElementById('pay-button');
-        const status = document.getElementById('status');
-        const userDiv = document.getElementById('user');
+        function runInit() {
+            const status = document.getElementById('init-status');
+            const payBtn = document.getElementById('pay-btn');
 
-        function initPi() {
-            if (!window.Pi) {
-                status.innerText = "Piブラウザで開いてください";
-                return;
+            try {
+                // 文字列の "1.5" に戻して確実に実行
+                window.Pi.init({ version: "1.5" });
+                status.innerText = "初期化成功！次に進んでね";
+                
+                // 初期化が終わってから認証をかける
+                window.Pi.authenticate(['username', 'payments'], function(p){})
+                .then(function(auth) {
+                    status.innerText = "認証完了: " + auth.user.username;
+                    payBtn.style.display = "inline-block";
+                })
+                .catch(function(e) {
+                    status.innerText = "認証エラー: " + e.message;
+                });
+            } catch (e) {
+                status.innerText = "初期化エラー: " + e.message;
             }
-
-            // バージョン1.5で初期化。失敗を考慮してあえて.thenで繋ぐわ
-            window.Pi.init({ version: "1.5" });
-            
-            status.innerText = "認証中...";
-            
-            window.Pi.authenticate(['username', 'payments'], function(payment) {
-                console.log("incomplete payment:", payment);
-            }).then(function(auth) {
-                userDiv.innerText = "Hi, " + auth.user.username;
-                status.innerText = "接続完了！ボタンを押してね";
-                btn.disabled = false;
-                btn.className = "ready";
-            }).catch(function(err) {
-                status.innerText = "エラー: " + err.message;
-            });
         }
 
-        function pay() {
+        function runPay() {
             window.Pi.createPayment({
                 amount: 3,
-                memo: "Checklist Item 10 Test",
-                metadata: { productId: "item_10" }
+                memo: "Item 10 Verification",
+                metadata: { productId: "test_v2" }
             }, {
                 onIncompletePaymentFound: (id) => window.Pi.completePayment(id, "manual_fix"),
                 onReadyForServerApproval: (id) => console.log("Approved"),
@@ -58,9 +64,6 @@
                 onError: (err) => alert("決済エラー: " + err.message)
             });
         }
-
-        // ページ読み込み完了後、少し待ってからSDKを叩く（これが確実よ）
-        setTimeout(initPi, 1000);
     </script>
 </body>
 </html>
