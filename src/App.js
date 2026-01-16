@@ -230,67 +230,35 @@ There’s no need to hold back in your life.` }
 
 // --- Pi SDK 決済ロジック ---
 const handlePayment = async () => {
-  alert("1. 処理開始！");
-  const piInstance = window.Pi;
+  const pi = window.Pi;
+  if (!pi) return;
 
   try {
-    if (!piInstance) {
-      alert("SDKが見つからないわ。ブラウザを更新してね。");
-      return;
-    }
+    await pi.init({ version: "2.0", sandbox: false });
 
-    await piInstance.init({ version: "2.0", sandbox: false });
-    alert("2. 認証へ..."); 
-    const auth = await piInstance.authenticate(['payments']);
-    alert("3. 認証OK: " + auth.user.username);
-
-    alert("4. 強制お掃除モード開始！");
-    const getIncomplete = piInstance.getIncompletePayment || piInstance.get_incomplete_payment;
-    
-    if (typeof getIncomplete === 'function') {
-      const incomplete = await getIncomplete();
-      if (incomplete) {
-        alert("5. 未完了を発見！お掃除するわね");
-        await piInstance.completePayment(incomplete.paymentId, incomplete.transaction.txid);
-        alert("お掃除完了！もう一度押してみて！");
-        return;
-      }
-    } else {
-      alert("4.5 道具がないから、直接完了を試みるわ");
-    }
-
-    alert("6. いよいよ決済画面よ！");
-    await piInstance.createPayment({
-      amount: 3.0,
+    await pi.createPayment({
+      amount: 3.14,
       memo: "Support Zen Verse Flip Vol.1",
-      metadata: { productId: "zen_verse_flip_v4" },
+      metadata: { productId: "zen_verse_flip_v1" },
     }, {
-      onIncompletePaymentFound: async (paymentId) => {
-        alert("未完了決済 ID: " + paymentId + " を発見！お掃除するわね。");
-        try {
-          await piInstance.completePayment(paymentId, "manual_fix"); 
-          alert("お掃除完了！もう一度ボタンを押してみて！");
-        } catch (e) {
-          alert("お掃除エラー: " + e.message);
-        }
+      // 💡 公式が推奨する「未完了決済」の唯一の正しい窓口
+      onIncompletePaymentFound: (id) => pi.completePayment(id, "manual_fix"),
+      
+      onReadyForServerApproval: (id) => {
+        console.log("Approved:", id);
+        // 本来はここでバックエンドを叩くけれど、まずはフロントで完結させるわ
       },
-      onReadyForServerApproval: (paymentId) => {
-        fetch('/api/approve', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ paymentId }),
-        });
+      
+      onReadyForServerCompletion: (id, txid) => {
+        pi.completePayment(id, txid);
+        alert("決済が完了しました！ありがとうございます！");
       },
-      onReadyForServerCompletion: (paymentId, txid) => {
-        piInstance.completePayment(paymentId, txid);
-        alert("決済完了！ありがとう！");
-      },
-      onCancel: (id) => alert("キャンセル"),
-      onError: (err) => alert("決済エラー: " + err.message)
+      
+      onCancel: (id) => {},
+      onError: (err) => alert("エラーが発生しました。時間を置いて再度お試しください。")
     });
-
   } catch (err) {
-    alert("致命的エラー: " + err.message);
+    console.error(err);
   }
 };
 
