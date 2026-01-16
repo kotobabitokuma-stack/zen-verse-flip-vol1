@@ -237,33 +237,41 @@ const handlePayment = async () => {
       return;
     }
 
-    // 初期化
     await window.Pi.init({ version: "2.0", sandbox: false });
     
     alert("2. 認証へ..."); 
     const auth = await window.Pi.authenticate(['payments']);
     alert("3. 認証OK: " + auth.user.username);
 
-    // 🔴 ゆうきくん、ここを見て！
-    // 前のコードで「4番」のアラートがあった場所を、
-    // まるごと消して、いきなり「6番」に飛ぶようにしたわよ！
-
-    alert("6. いよいよ決済画面(createPayment)を呼び出すわよ！");
+    // 🧹 お掃除（未完了決済のチェック）を復活させるわよ！
+    alert("4. 残っている決済がないかチェックするわね");
     
+    // 💡 window.Pi.getIncompletePayment を使うわ
+    const incomplete = await window.Pi.getIncompletePayment();
+    
+    if (incomplete) {
+      alert("5. 過去の未完了決済を見つけたわ！これをお掃除するわね。");
+      // 過去の決済を完了（またはキャンセル）させる儀式
+      await window.Pi.completePayment(incomplete.paymentId, incomplete.transaction.txid);
+      alert("お掃除完了！もう一度ボタンを押せば、新しい決済ができるわよ。");
+      return; // 一旦ここで終了
+    }
+
+    alert("6. 新しい決済画面を呼び出すわよ！");
     await window.Pi.createPayment({
       amount: 3.0,
       memo: "Support Zen Verse Flip Vol.1",
       metadata: { productId: "zen_verse_flip_v4" },
     }, {
-      onReadyForServerApproval: (paymentId) => {
-        fetch('/api/approve', {
+      onReadyForServerApproval: async (paymentId) => {
+        await fetch('/api/approve', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ paymentId }),
         });
       },
-      onReadyForServerCompletion: (paymentId, txid) => {
-        window.Pi.completePayment(paymentId, txid);
+      onReadyForServerCompletion: async (paymentId, txid) => {
+        await window.Pi.completePayment(paymentId, txid);
         alert("決済完了！ありがとう！");
       },
       onCancel: (id) => alert("キャンセルされました"),
@@ -271,8 +279,7 @@ const handlePayment = async () => {
     });
 
   } catch (err) {
-    // 💡 ここでエラーが出るなら、createPaymentすら読み込めていないことになるわ
-    alert("致命的エラー: " + err.message);
+    alert("エラー発生: " + err.message);
   }
 };
 // --- ここから下はゆうきくんが送ってくれたUIコード ---
