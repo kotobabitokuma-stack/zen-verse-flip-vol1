@@ -234,62 +234,54 @@ const handlePayment = async () => {
   try {
     // ⏳ 儀式A：Pi SDKが読み込まれているかチェック
     if (!window.Pi) {
-      alert("Pi SDKが見つからないわ。ブラウザを更新してみて！");
+      alert("SDKが見つかりません。ブラウザを更新してね。");
       return;
     }
 
-    // ⏳ 儀式B：ボタンを押した瞬間に「初期化」を実行して、終わるまで待つ！
-    // これを中に入れることで、4番のエラーを防げるわ。
+    // ⏳ 儀式B：ここで一気に初期化！
+    // 💡 sandbox: false になっているか確認してね（本番用）
     await window.Pi.init({ version: "2.0", sandbox: false });
     
-    const scopes = ['payments'];
-    alert("2. 認証(authenticate)を呼び出すわよ..."); 
-    const auth = await window.Pi.authenticate(scopes);
-    
-    alert("3. 認証成功！こんにちは、" + auth.user.username + "さん！");
+    alert("2. 認証を開始するわよ..."); 
+    const auth = await window.Pi.authenticate(['payments']);
+    alert("3. 認証成功: " + auth.user.username);
 
-    // 🧹 お掃除（未完了決済のチェック）
-    alert("4. 未完了決済がないかチェックするわね");
+    // 🧹 お掃除（未完了チェック）
+    alert("4. 未完了チェック...");
     
+    // index.htmlの初期化を消したから、これで正しく動くはずよ！
     const incomplete = await window.Pi.getIncompletePayment();
+    
     if (incomplete) {
-      alert("5. 未完了があったから片付けるわ");
+      alert("5. 未完了を片付けるわね");
       await window.Pi.completePayment(incomplete.paymentId, incomplete.transaction.txid);
       alert("お掃除完了！もう一度ボタンを押してね。");
       return;
     }
 
-    alert("6. いよいよ新しい決済を作るわよ！");
+    alert("6. いよいよ決済画面よ！");
     await window.Pi.createPayment({
       amount: 3.0,
       memo: "Support Zen Verse Flip Vol.1",
       metadata: { productId: "zen_verse_flip_v4" },
     }, {
-      onReadyForServerApproval: async (paymentId) => {
-        await fetch('/api/approve', {
+      onReadyForServerApproval: (paymentId) => {
+        fetch('/api/approve', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ paymentId }),
         });
       },
-      onReadyForServerCompletion: async (paymentId, txid) => {
-        try {
-          await window.Pi.completePayment(paymentId, txid);
-          alert("Thank you! 決済が完全に完了しました！");
-        } catch (e) {
-          console.error("完了報告エラー:", e);
-        }
+      onReadyForServerCompletion: (paymentId, txid) => {
+        window.Pi.completePayment(paymentId, txid);
+        alert("決済完了！ありがとう！");
       },
-      onCancel: (paymentId) => console.log("キャンセル:", paymentId),
-      onError: (error, paymentId) => {
-        console.error("エラー:", error);
-        alert("エラーが発生したわ: " + error.message);
-      },
+      onCancel: (id) => console.log("キャンセル"),
+      onError: (err) => alert("決済エラー: " + err.message)
     });
 
   } catch (err) {
-    console.error("認証失敗:", err);
-    alert("エラーが発生したわよ: " + err.message);
+    alert("エラー発生: " + err.message);
   }
 };
 
