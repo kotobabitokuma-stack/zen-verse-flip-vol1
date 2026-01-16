@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 
 // --- 1. 画像インポート (ゆうきくんの環境に合わせてね) ---
 import top01 from "./assets/images/top01.png";
