@@ -230,7 +230,13 @@ There’s no need to hold back in your life.` }
 // --- Pi SDK 決済ロジック ---
 const Pi = window.Pi;
 
+// 🟢 ここを追加！
+if (Pi) {
+  Pi.init({ version: "2.0", sandbox: true });
+}
+
 const handlePayment = async () => {
+  // ...（以下、ゆうきくんのhandlePaymentの中身）
   try {
     const scopes = ['payments'];
     
