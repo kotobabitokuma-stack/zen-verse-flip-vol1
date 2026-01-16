@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 
 // --- 画像インポート (省略せずに全部残してね！) ---
 import top01 from "./assets/images/top01.png";
