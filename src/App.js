@@ -264,7 +264,7 @@ function AppWithPi({ user }) {
         return;
       }
       // 1回だけ初期化
-      await window.Pi.init({ version: "2.0", sandbox: false });
+      await window.Pi.init({ version: "2.0", sandbox: true });
       
       // 決済作成
       await window.Pi.createPayment({
