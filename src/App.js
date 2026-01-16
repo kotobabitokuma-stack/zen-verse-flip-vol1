@@ -314,7 +314,7 @@ const buttonStyle = {
 
 // --- アプリ本体 ---
 // 💡 daysはApp.jsの外（index.jsなど）で定義されている前提よ
-function AppWithPi({ user, days }) {
+function AppWithPi({ user }) {
   const [selectedDayIndex, setSelectedDayIndex] = useState(null);
   const [showText, setShowText] = useState(false);
   const [isTop, setIsTop] = useState(true);
