@@ -266,12 +266,23 @@ alert("4. 強制お掃除モード開始！");
       // このエラーが出ているということは、サーバー側に決済IDが残っているはずなの。
     }
 
-    alert("6. いよいよ決済画面よ！");
+   alert("6. いよいよ決済画面よ！");
     await piInstance.createPayment({
       amount: 3.0,
       memo: "Support Zen Verse Flip Vol.1",
       metadata: { productId: "zen_verse_flip_v4" },
     }, {
+      // 🔴 ここが「掃除の窓口」！これを足すことでさっきのエラーを回避するわ
+      onIncompletePaymentFound: async (paymentId) => {
+        alert("未完了決済 ID: " + paymentId + " を発見！今からお掃除するわね。");
+        try {
+          // 💡 ここでサーバー側の承認が必要な場合があるけど、まずは完了を試みるわ
+          await piInstance.completePayment(paymentId, "manual_fix"); 
+          alert("お掃除完了！もう一度ボタンを押してみて！");
+        } catch (e) {
+          alert("お掃除中にエラー: " + e.message);
+        }
+      },
       onReadyForServerApproval: (paymentId) => {
         fetch('/api/approve', {
           method: 'POST',
@@ -286,11 +297,6 @@ alert("4. 強制お掃除モード開始！");
       onCancel: (id) => alert("キャンセル"),
       onError: (err) => alert("決済エラー: " + err.message)
     });
-
-  } catch (err) {
-    alert("致命的エラー: " + err.message);
-  }
-};
 // --- ここから下はゆうきくんが送ってくれたUIコード ---
 
 // PiUserBadge
