@@ -72,31 +72,34 @@ const days = [
 
 const buttonStyle = {
   padding: "12px 24px", background: "#FFD700", color: "#000", fontWeight: "bold",
-  border: "1px solid #ccc", borderRadius: "8px", cursor: "pointer"
+  border: "none", borderRadius: "8px", cursor: "pointer", marginTop: "20px"
 };
 
-function PiUserBadge({ user }) {
-  if (!user) return null;
-  return (
-    <div style={{ position: "fixed", top: 15, right: 15, background: "#5B45FF", color: "white", padding: "8px 14px", borderRadius: "20px", fontSize: "14px", fontWeight: "bold", zIndex: 1000 }}>
-      {user.username}
-    </div>
-  );
-}
-
-function AppWithPi({ user }) {
+function App() {
+  const [user, setUser] = useState(null);
   const [selectedDayIndex, setSelectedDayIndex] = useState(null);
   const [showText, setShowText] = useState(false);
-  const [isTop, setIsTop] = useState(true);
   const touchStartX = useRef(0);
 
-  // 🚀 ここが最優先の決済ロジックよ！
+  // 1. 起動時に認証（ここでSDKが自動初期化されるわ）
+  useEffect(() => {
+    const pi = window.Pi;
+    if (pi) {
+      pi.authenticate(['username', 'payments'], (payment) => {
+        console.log("未完了の決済:", payment);
+      }).then(auth => setUser(auth.user))
+        .catch(err => console.error("認証エラー:", err));
+    }
+  }, []);
+
+  // 2. 決済実行ロジック
   const handlePayment = async () => {
     const pi = window.Pi;
-    if (!pi) return;
+    if (!pi) {
+      alert("Pi Networkが見つかりません。Piブラウザで開いていますか？");
+      return;
+    }
     try {
-      const scopes = ['payments'];
-      await pi.authenticate(scopes, (payment) => { console.log("Unfinished:", payment); });
       await pi.createPayment({
         amount: 3, 
         memo: "Support Zen Verse Flip Vol.1",
@@ -106,69 +109,60 @@ function AppWithPi({ user }) {
         onReadyForServerApproval: (id) => console.log("Approved"),
         onReadyForServerCompletion: (id, txid) => window.Pi.completePayment(id, txid),
         onCancel: () => {},
-        onError: (err) => alert("Error: " + err.message)
+        onError: (err) => alert("決済エラー: " + err.message)
       });
     } catch (e) {
-      alert("Error: " + e.message);
+      alert("実行エラー: " + e.message);
     }
   };
 
   if (!days || days.length === 0) return <div>Loading...</div>;
-
   const selectedDay = selectedDayIndex !== null ? days[selectedDayIndex] : null;
 
+  // 詳細表示の時の動作
   const handleSwipe = (direction) => {
     if (selectedDayIndex === null) return;
     if (direction === "left" && selectedDayIndex < days.length - 1) {
       setSelectedDayIndex(selectedDayIndex + 1);
       setShowText(false);
     } else if (direction === "right") {
-      if (selectedDayIndex === 1) { setIsTop(true); setSelectedDayIndex(null); }
+      if (selectedDayIndex === 1) { setSelectedDayIndex(null); }
       else if (selectedDayIndex > 1) { setSelectedDayIndex(selectedDayIndex - 1); setShowText(false); }
     }
   };
 
+  // 一覧画面（トップ）
   if (selectedDay === null) {
-    if (isTop) {
-      return (
-        <div style={{ textAlign: "center", padding: "10px" }}>
-          <img src={days[0].image} alt="Top" style={{ width: "100%", borderRadius: "10px", cursor: "pointer" }} onClick={() => setIsTop(false)} />
-          {/* ⚡️ このボタンを成功させるのが今のゴール！ */}
-          <button onClick={(e) => { e.stopPropagation(); handlePayment(); }} style={{ ...buttonStyle, marginTop: "20px" }}>
-            Support this App (3 Pi)
-          </button>
-          <PiUserBadge user={user} />
-        </div>
-      );
-    }
     return (
       <div style={{ textAlign: "center", padding: "10px" }}>
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(70px, 1fr))", gap: "10px" }}>
-          {days.slice(1).map((d, i) => (
-            <button key={i} onClick={() => { setSelectedDayIndex(i + 1); setShowText(false); }} style={{ padding: "16px", borderRadius: "8px" }}>{d.day}</button>
-          ))}
-        </div>
-        <PiUserBadge user={user} />
+        <img src={days[0].image} alt="Top" style={{ width: "100%", borderRadius: "10px", cursor: "pointer" }} onClick={() => setSelectedDayIndex(1)} />
+        <br />
+        <button onClick={handlePayment} style={buttonStyle}>
+          Support this App (3 Pi)
+        </button>
+        {user && <div style={{marginTop: "10px", color: "#555"}}>User: {user.username}</div>}
       </div>
     );
   }
 
+  // 個別の日付表示
   return (
-    <div style={{ textAlign: "center" }} onTouchStart={e => { touchStartX.current = e.touches[0].clientX; }} onTouchEnd={e => {
-      const deltaX = e.changedTouches[0].clientX - touchStartX.current;
-      if (deltaX > 50) handleSwipe("right"); else if (deltaX < -50) handleSwipe("left");
-    }}>
+    <div style={{ textAlign: "center" }}
+         onTouchStart={e => { touchStartX.current = e.touches[0].clientX; }}
+         onTouchEnd={e => {
+           const deltaX = e.changedTouches[0].clientX - touchStartX.current;
+           if (deltaX > 50) handleSwipe("right");
+           else if (deltaX < -50) handleSwipe("left");
+         }}>
       <div style={{ position: "relative" }} onClick={() => setShowText(!showText)}>
         <img src={selectedDay.image} alt={selectedDay.day} style={{ width: "100%", borderRadius: "10px" }} />
-        {showText && <div style={{ position: "absolute", bottom: 0, background: "rgba(0,0,0,0.7)", color: "white", padding: "15px", textAlign: "left" }}>{selectedDay.text}</div>}
+        {showText && <div style={{ position: "absolute", bottom: 0, background: "rgba(0,0,0,0.7)", color: "white", padding: "15px", width: "100%", boxSizing: "border-box" }}>{selectedDay.text}</div>}
       </div>
-      <div style={{ position: "fixed", bottom: "80px", width: "100%", display: "flex", justifyContent: "space-between", padding: "0 20px", boxSizing: "border-box" }}>
-        <button onClick={() => { setSelectedDayIndex(null); setIsTop(false); }} style={buttonStyle}>All Days</button>
-        <button onClick={() => { setSelectedDayIndex(null); setIsTop(true); }} style={buttonStyle}>Top</button>
+      <div style={{ marginTop: "20px" }}>
+        <button onClick={() => setSelectedDayIndex(null)} style={{...buttonStyle, background: "#ccc", color: "#333"}}>Back to Menu</button>
       </div>
-      <PiUserBadge user={user} />
     </div>
   );
 }
 
-export default AppWithPi;
+export default App;
