@@ -236,7 +236,9 @@ if (Pi) {
 }
 
 const handlePayment = async () => {
+  alert("ボタンは反応してるわよ！"); // 👈 これを追加！
   try {
+    // ...
     const scopes = ['payments'];
     
     // 💥 儀式1：認証（シンプルにログイン！）
