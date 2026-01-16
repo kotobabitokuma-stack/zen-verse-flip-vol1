@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 
-// --- 画像インポート (省略せずに全部残してね！) ---
+// --- 1. 画像インポート (ゆうきくんの環境に合わせてね) ---
 import top01 from "./assets/images/top01.png";
 import day1 from "./assets/images/day1.png";
 import day2 from "./assets/images/day2.png";
@@ -34,7 +34,7 @@ import day29 from "./assets/images/day29.png";
 import day30 from "./assets/images/day30.png";
 import day31 from "./assets/images/day31.png";
 
-// --- 1. ここが修正ポイント！重複を消して1つにまとめたわ ---
+// --- 2. データ定義 ---
 const days = [
   { day: "Top", image: top01, text: "" },
   { day: "Day 1", image: day1, text: `Every encounter and event comes to bring happiness...` },
@@ -70,35 +70,29 @@ const days = [
   { day: "Day 31", image: day31, text: `You don’t need to hold back in your life. Live freely, live happily.` }
 ];
 
-const buttonStyle = {
-  padding: "12px 24px", background: "#FFD700", color: "#000", fontWeight: "bold",
-  border: "none", borderRadius: "8px", cursor: "pointer", marginTop: "20px"
-};
-
+// --- 3. アプリ本体 ---
 function App() {
   const [user, setUser] = useState(null);
   const [selectedDayIndex, setSelectedDayIndex] = useState(null);
   const [showText, setShowText] = useState(false);
   const touchStartX = useRef(0);
 
-  // 1. 起動時に認証（ここでSDKが自動初期化されるわ）
+  // 初期化と認証
   useEffect(() => {
     const pi = window.Pi;
     if (pi) {
+      pi.init({ version: "1.5", sandbox: true }); 
       pi.authenticate(['username', 'payments'], (payment) => {
-        console.log("未完了の決済:", payment);
+        console.log("Unfinished payment:", payment);
       }).then(auth => setUser(auth.user))
-        .catch(err => console.error("認証エラー:", err));
+        .catch(err => console.error(err));
     }
   }, []);
 
-  // 2. 決済実行ロジック
+  // 決済処理
   const handlePayment = async () => {
     const pi = window.Pi;
-    if (!pi) {
-      alert("Pi Networkが見つかりません。Piブラウザで開いていますか？");
-      return;
-    }
+    if (!pi) return;
     try {
       await pi.createPayment({
         amount: 3, 
@@ -109,58 +103,33 @@ function App() {
         onReadyForServerApproval: (id) => console.log("Approved"),
         onReadyForServerCompletion: (id, txid) => window.Pi.completePayment(id, txid),
         onCancel: () => {},
-        onError: (err) => alert("決済エラー: " + err.message)
+        onError: (err) => alert("Error: " + err.message)
       });
     } catch (e) {
-      alert("実行エラー: " + e.message);
+      alert("Error: " + e.message);
     }
   };
 
   if (!days || days.length === 0) return <div>Loading...</div>;
   const selectedDay = selectedDayIndex !== null ? days[selectedDayIndex] : null;
 
-  // 詳細表示の時の動作
-  const handleSwipe = (direction) => {
-    if (selectedDayIndex === null) return;
-    if (direction === "left" && selectedDayIndex < days.length - 1) {
-      setSelectedDayIndex(selectedDayIndex + 1);
-      setShowText(false);
-    } else if (direction === "right") {
-      if (selectedDayIndex === 1) { setSelectedDayIndex(null); }
-      else if (selectedDayIndex > 1) { setSelectedDayIndex(selectedDayIndex - 1); setShowText(false); }
-    }
-  };
-
-  // 一覧画面（トップ）
   if (selectedDay === null) {
     return (
-      <div style={{ textAlign: "center", padding: "10px" }}>
+      <div style={{ textAlign: "center", padding: "20px" }}>
         <img src={days[0].image} alt="Top" style={{ width: "100%", borderRadius: "10px", cursor: "pointer" }} onClick={() => setSelectedDayIndex(1)} />
-        <br />
-        <button onClick={handlePayment} style={buttonStyle}>
-          Support this App (3 Pi)
-        </button>
-        {user && <div style={{marginTop: "10px", color: "#555"}}>User: {user.username}</div>}
+        <button onClick={handlePayment} style={{ marginTop: "20px", padding: "12px 24px", background: "#FFD700", border: "none", borderRadius: "8px", fontWeight: "bold" }}>Support (3 Pi)</button>
+        {user && <div style={{ marginTop: "10px" }}>Hi, {user.username}</div>}
       </div>
     );
   }
 
-  // 個別の日付表示
   return (
-    <div style={{ textAlign: "center" }}
-         onTouchStart={e => { touchStartX.current = e.touches[0].clientX; }}
-         onTouchEnd={e => {
-           const deltaX = e.changedTouches[0].clientX - touchStartX.current;
-           if (deltaX > 50) handleSwipe("right");
-           else if (deltaX < -50) handleSwipe("left");
-         }}>
+    <div style={{ textAlign: "center" }}>
       <div style={{ position: "relative" }} onClick={() => setShowText(!showText)}>
         <img src={selectedDay.image} alt={selectedDay.day} style={{ width: "100%", borderRadius: "10px" }} />
         {showText && <div style={{ position: "absolute", bottom: 0, background: "rgba(0,0,0,0.7)", color: "white", padding: "15px", width: "100%", boxSizing: "border-box" }}>{selectedDay.text}</div>}
       </div>
-      <div style={{ marginTop: "20px" }}>
-        <button onClick={() => setSelectedDayIndex(null)} style={{...buttonStyle, background: "#ccc", color: "#333"}}>Back to Menu</button>
-      </div>
+      <button onClick={() => setSelectedDayIndex(null)} style={{ marginTop: "20px", padding: "10px 20px" }}>Menu</button>
     </div>
   );
 }
