@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react'; // 1行目: useEffect を追加してね！
 
 // --- 画像インポート部分はそのまま維持 ---
 import top01 from "./assets/images/top01.png";
@@ -313,18 +313,40 @@ const buttonStyle = {
 };
 
 // --- アプリ本体 ---
-// 💡 daysはApp.jsの外（index.jsなど）で定義されている前提よ
 function AppWithPi({ user }) {
   const [selectedDayIndex, setSelectedDayIndex] = useState(null);
   const [showText, setShowText] = useState(false);
   const [isTop, setIsTop] = useState(true);
   const touchStartX = useRef(0);
 
-  // daysが未定義の場合のエラー防止
+  // ✅ 1. 自動お掃除機能（ここで完結するように閉じカッコを整理したわ）
+  useEffect(() => {
+    const autoCleanUp = async () => {
+      if (window.Pi) {
+        try {
+          await window.Pi.init({ version: "2.0", sandbox: false });
+          const getIncomplete = window.Pi.getIncompletePayment || window.Pi.get_incomplete_payment;
+          if (typeof getIncomplete === 'function') {
+            const incomplete = await getIncomplete();
+            if (incomplete) {
+              await window.Pi.completePayment(incomplete.paymentId, "manual_fix");
+              alert("古い決済をお掃除したわ！これでボタンが使えるはずよ。");
+            }
+          }
+        } catch (e) {
+          console.log("お掃除不要（または失敗）:", e);
+        }
+      }
+    };
+    autoCleanUp();
+  }, []); // 👈 閉じカッコはここ！ここで一度区切るのが正解よ。
+
+  // ✅ 2. データのガード（お掃除の外に出したわ）
   if (!days || days.length === 0) {
-    return <div>Loading calendar data...</div>;
+    return <div style={{ textAlign: "center", marginTop: "50px" }}>Loading calendar data...</div>;
   }
 
+  // ✅ 3. 以降のロジック（ここからはゆうきくんの元のコードと同じよ）
   const selectedDay = selectedDayIndex !== null ? days[selectedDayIndex] : null;
 
   const handleSwipe = (direction) => {
@@ -415,5 +437,4 @@ function AppWithPi({ user }) {
     </div>
   );
 }
-
 export default AppWithPi;
