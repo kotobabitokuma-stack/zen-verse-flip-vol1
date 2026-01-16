@@ -1,6 +1,5 @@
-import React, { useState, useRef } from 'react'; // 1行目: useEffect を追加してね！
+import React, { useState, useRef } from 'react';
 
-// --- 画像インポート部分はそのまま維持 ---
 import top01 from "./assets/images/top01.png";
 import day1 from "./assets/images/day1.png";
 import day2 from "./assets/images/day2.png";
@@ -33,6 +32,10 @@ import day28 from "./assets/images/day28.png";
 import day29 from "./assets/images/day29.png";
 import day30 from "./assets/images/day30.png";
 import day31 from "./assets/images/day31.png";
+
+const days = [
+  { day: "Top", image: top01, text: "" },
+  { day: "Day 1", image: day1, text: `Every encounter and event comes to bring happiness...` },
 
 // 便宜上、daysの定義はゆうきくんの元のフルバージョンを使ってね！
 const days = [
@@ -228,22 +231,11 @@ There’s no need to hold back in your life.` }
 ];
 
 
-// --- Pi SDK 決済ロジック ---
-// --- 1. 必要な定義をここに追加したわよ ---
-let isPiInitialized = false;
-
 const buttonStyle = {
-  padding: "6px 12px", 
-  fontSize: "14px", 
-  background: "transparent", 
-  color: "#555",
-  border: "1px solid #ccc", 
-  borderRadius: "8px", 
-  cursor: "pointer", 
-  opacity: 0.8
+  padding: "6px 12px", fontSize: "14px", background: "transparent", color: "#555",
+  border: "1px solid #ccc", borderRadius: "8px", cursor: "pointer", opacity: 0.8
 };
 
-// --- 2. UIコンポーネント ---
 function PiUserBadge({ user }) {
   if (!user) return null;
   return (
@@ -256,49 +248,35 @@ function PiUserBadge({ user }) {
   );
 }
 
-// --- 3. アプリ本体 ---
 function AppWithPi({ user }) {
-  // ✅ 状態管理 (useState)
   const [selectedDayIndex, setSelectedDayIndex] = useState(null);
   const [showText, setShowText] = useState(false);
   const [isTop, setIsTop] = useState(true);
   const touchStartX = useRef(0);
 
-  // ✅ 決済ロジック
-const handlePayment = async () => {
+  const handlePayment = async () => {
     const pi = window.Pi;
     if (!pi) return;
-
     try {
-      // 初期化と同時に認証を通す（これが最短ルートよ）
       const scopes = ['payments'];
-      const auth = await pi.authenticate(scopes, (payment) => {
-        console.log("未完了の決済:", payment);
-      });
-
-      console.log("Authenticated for:", auth.user.username);
-
-      // 決済作成
+      await pi.authenticate(scopes, (payment) => { console.log("Unfinished:", payment); });
       await pi.createPayment({
         amount: 3, 
         memo: "Support Zen Verse Flip Vol.1",
         metadata: { productId: "zen_verse_flip_v1" },
       }, {
         onIncompletePaymentFound: (id) => window.Pi.completePayment(id, "manual_fix"),
-        onReadyForServerApproval: (id) => console.log("Server Approval Ready"),
+        onReadyForServerApproval: (id) => console.log("Approved"),
         onReadyForServerCompletion: (id, txid) => window.Pi.completePayment(id, txid),
         onCancel: () => {},
-        onError: (err) => alert("決済エラー: " + err.message)
+        onError: (err) => alert("Error: " + err.message)
       });
     } catch (e) {
-      alert("実行エラー: " + e.message);
+      alert("Error: " + e.message);
     }
   };
 
-  // ✅ データのガード (daysは外部で定義されている前提)
-  if (!days || days.length === 0) {
-    return <div style={{ textAlign: "center", marginTop: "50px" }}>Loading calendar data...</div>;
-  }
+  if (!days || days.length === 0) return <div>Loading...</div>;
 
   const selectedDay = selectedDayIndex !== null ? days[selectedDayIndex] : null;
 
@@ -307,52 +285,27 @@ const handlePayment = async () => {
     if (direction === "left" && selectedDayIndex < days.length - 1) {
       setSelectedDayIndex(selectedDayIndex + 1);
       setShowText(false);
-    }
-    if (direction === "right") {
-      if (selectedDayIndex === 1) {
-        setIsTop(true);
-        setSelectedDayIndex(null);
-      } else if (selectedDayIndex > 1) {
-        setSelectedDayIndex(selectedDayIndex - 1);
-        setShowText(false);
-      }
+    } else if (direction === "right") {
+      if (selectedDayIndex === 1) { setIsTop(true); setSelectedDayIndex(null); }
+      else if (selectedDayIndex > 1) { setSelectedDayIndex(selectedDayIndex - 1); setShowText(false); }
     }
   };
 
-  // --- JSX (見た目) ---
   if (selectedDay === null) {
     if (isTop) {
       return (
-        <div style={{ textAlign: "center", padding: "10px", paddingBottom: "100px" }}>
-          <img
-            src={days[0].image}
-            alt="Top"
-            style={{ width: "100%", height: "auto", borderRadius: "10px", cursor: "pointer" }}
-            onClick={() => setIsTop(false)}
-          />
-          <p style={{ marginTop: "12px", fontSize: "18px", color: "#666" }}>Tap to Start</p>
-          <button 
-            onClick={(e) => { e.stopPropagation(); handlePayment(); }}
-            style={{ 
-              ...buttonStyle, background: "#FFD700", color: "#000", fontWeight: "bold", 
-              marginTop: "10px", marginBottom: "80px", padding: "12px 24px", opacity: 1, position: "relative", zIndex: 1001
-            }}
-          >
-            Support this App (3 Pi)
-          </button>
+        <div style={{ textAlign: "center", padding: "10px" }}>
+          <img src={days[0].image} alt="Top" style={{ width: "100%", borderRadius: "10px", cursor: "pointer" }} onClick={() => setIsTop(false)} />
+          <button onClick={(e) => { e.stopPropagation(); handlePayment(); }} style={{ ...buttonStyle, background: "#FFD700", marginTop: "20px", padding: "12px 24px" }}>Support this App (3 Pi)</button>
           <PiUserBadge user={user} />
         </div>
       );
     }
-
     return (
       <div style={{ textAlign: "center", padding: "10px" }}>
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(70px, 1fr))", gap: "10px", justifyItems: "center", marginBottom: "20px" }}>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(70px, 1fr))", gap: "10px" }}>
           {days.slice(1).map((d, i) => (
-            <button key={i} onClick={() => { setSelectedDayIndex(i + 1); setShowText(false); }}
-              style={{ padding: "16px", fontSize: "18px", borderRadius: "8px", border: "1px solid #ccc", backgroundColor: "#f9f9f9", width: "100%" }}>
-              {d.day}
-            </button>
+            <button key={i} onClick={() => { setSelectedDayIndex(i + 1); setShowText(false); }} style={{ padding: "16px", borderRadius: "8px" }}>{d.day}</button>
           ))}
         </div>
         <PiUserBadge user={user} />
@@ -360,33 +313,18 @@ const handlePayment = async () => {
     );
   }
 
-return (
-    <div style={{ textAlign: "center", padding: 0 }}
-          onTouchStart={e => { touchStartX.current = e.touches[0].clientX; }}
-          onTouchEnd={e => {
-            const deltaX = e.changedTouches[0].clientX - touchStartX.current;
-            if (deltaX > 50) handleSwipe("right");
-            else if (deltaX < -50) handleSwipe("left");
-          }}
-    >
-      <div style={{ position: "relative", width: "100%", cursor: "pointer" }} onClick={() => setShowText(!showText)}>
-        <img src={selectedDay.image} alt={selectedDay.day} style={{ width: "100%", height: "auto", borderRadius: "10px" }} />
-        {selectedDay.text && (
-          <div style={{
-            position: "absolute", bottom: 0, left: 0, width: "100%", maxHeight: showText ? "60%" : "0",
-            overflowY: "auto", background: "linear-gradient(to top, rgba(0,0,0,0.85), rgba(0,0,0,0.3))",
-            color: "white", padding: showText ? "15px" : "0", fontSize: "18px", lineHeight: "1.6",
-            textAlign: "left", borderRadius: "0 0 10px 10px", transition: "all 0.4s ease-in-out"
-          }}>
-            {selectedDay.text.split("\n").map((line, idx) => (
-              <p key={idx} style={{ margin: "0 0 12px 0" }}>{line}</p>
-            ))}
-          </div>
-        )}
+  return (
+    <div style={{ textAlign: "center" }} onTouchStart={e => { touchStartX.current = e.touches[0].clientX; }} onTouchEnd={e => {
+      const deltaX = e.changedTouches[0].clientX - touchStartX.current;
+      if (deltaX > 50) handleSwipe("right"); else if (deltaX < -50) handleSwipe("left");
+    }}>
+      <div style={{ position: "relative" }} onClick={() => setShowText(!showText)}>
+        <img src={selectedDay.image} alt={selectedDay.day} style={{ width: "100%", borderRadius: "10px" }} />
+        {showText && <div style={{ position: "absolute", bottom: 0, background: "rgba(0,0,0,0.7)", color: "white", padding: "15px" }}>{selectedDay.text}</div>}
       </div>
-      <div style={{ position: "fixed", bottom: "80px", left: 0, width: "100%", display: "flex", justifyContent: "space-between", padding: "0 12px", boxSizing: "border-box", zIndex: 200 }}>
-        <button onClick={() => { setSelectedDayIndex(null); setShowText(false); }} style={buttonStyle}>All Days</button>
-        <button onClick={() => { setSelectedDayIndex(null); setShowText(false); setIsTop(true); }} style={buttonStyle}>Top</button>
+      <div style={{ position: "fixed", bottom: "80px", width: "100%", display: "flex", justifyContent: "space-between" }}>
+        <button onClick={() => { setSelectedDayIndex(null); setIsTop(false); }} style={buttonStyle}>All Days</button>
+        <button onClick={() => { setSelectedDayIndex(null); setIsTop(true); }} style={buttonStyle}>Top</button>
       </div>
       <PiUserBadge user={user} />
     </div>
