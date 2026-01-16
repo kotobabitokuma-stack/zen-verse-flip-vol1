@@ -1,12 +1,37 @@
 <!DOCTYPE html>
-<html lang="en">
-  <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Zen Verse Flip</title>
-  </head>
-  <body>
-    <script src="https://sdk.minepi.com/pi-sdk.js?v=1.5.0"></script>
-    <div id="root"></div>
-  </body>
+<html>
+<head>
+    <title>Zen Verse Flip - Item 10</title>
+    <script src="https://sdk.minepi.com/pi-sdk.js"></script>
+    <script>
+        window.onload = function() {
+            // バージョン指定なしの最も原始的な初期化
+            window.Pi.init({ version: "1.5" }); 
+            window.Pi.authenticate(['username', 'payments'], function(p){})
+                .then(function(auth) {
+                    document.getElementById('user').innerText = "Hi, " + auth.user.username;
+                });
+        };
+
+        function pay() {
+            window.Pi.createPayment({
+                amount: 3,
+                memo: "Checklist Item 10",
+                metadata: { productId: "test" }
+            }, {
+                onIncompletePaymentFound: (id) => window.Pi.completePayment(id, "manual_fix"),
+                onReadyForServerApproval: (id) => console.log("Approved"),
+                onReadyForServerCompletion: (id, txid) => window.Pi.completePayment(id, txid),
+                onCancel: () => {},
+                onError: (err) => alert(err.message)
+            });
+        }
+    </script>
+</head>
+<body style="text-align:center; padding-top:50px;">
+    <h1>Zen Verse Flip</h1>
+    <div id="user">Loading Pi...</div>
+    <br>
+    <button onclick="pay()" style="padding:20px; background:gold;">Support (3 Pi)</button>
+</body>
 </html>
