@@ -249,25 +249,27 @@ const buttonStyle = {
 };
 
 // --- アプリ本体 ---
+
+// ✅ 1. ここ（関数の外）に置くのがポイントよ！
+let isPiInitialized = false; 
+
 function AppWithPi({ user }) {
   const [selectedDayIndex, setSelectedDayIndex] = useState(null);
-  const [showText, setShowText] = useState(false);
-  const [isTop, setIsTop] = useState(true);
-  const touchStartX = useRef(0);
+  // ... (中略)
 
-  // 💡 お掃除(useEffect)を一旦まるごと消して、これだけにするの
   const handlePayment = async () => {
-    console.log("Button Clicked!"); // 👈 ログが出るか確認
+    const pi = window.Pi;
+    if (!pi) return;
+
     try {
-      if (!window.Pi) {
-        alert("Pi SDKが見つからないわ");
-        return;
+      if (!isPiInitialized) {
+        console.log("Initializing Pi SDK...");
+        await pi.init({ version: "2.0", sandbox: true });
+        isPiInitialized = true;
       }
-      // 1回だけ初期化
-      await window.Pi.init({ version: "2.0", sandbox: true });
-      
-      // 決済作成
-      await window.Pi.createPayment({
+
+      console.log("Creating Payment...");
+      await pi.createPayment({
         amount: 3.14,
         memo: "Support Zen Verse Flip Vol.1",
         metadata: { productId: "zen_verse_flip_v1" },
