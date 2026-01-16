@@ -255,53 +255,35 @@ function AppWithPi({ user }) {
   const [isTop, setIsTop] = useState(true);
   const touchStartX = useRef(0);
 
-  // 💡 ここに handlePayment を引っ越しさせるの！
+  // 💡 お掃除(useEffect)を一旦まるごと消して、これだけにするの
   const handlePayment = async () => {
-    const pi = window.Pi;
-    if (!pi) return;
+    console.log("Button Clicked!"); // 👈 ログが出るか確認
     try {
-      await pi.init({ version: "2.0", sandbox: false });
-      await pi.createPayment({
+      if (!window.Pi) {
+        alert("Pi SDKが見つからないわ");
+        return;
+      }
+      // 1回だけ初期化
+      await window.Pi.init({ version: "2.0", sandbox: false });
+      
+      // 決済作成
+      await window.Pi.createPayment({
         amount: 3.14,
         memo: "Support Zen Verse Flip Vol.1",
         metadata: { productId: "zen_verse_flip_v1" },
       }, {
-        onIncompletePaymentFound: (id) => pi.completePayment(id, "manual_fix"),
-        onReadyForServerApproval: (id) => console.log("Approved:", id),
-        onReadyForServerCompletion: (id, txid) => {
-          pi.completePayment(id, txid);
-          alert("決済が完了しました！ありがとうございます！");
-        },
-        onCancel: (id) => {},
+        onIncompletePaymentFound: (id) => window.Pi.completePayment(id, "manual_fix"),
+        onReadyForServerApproval: (id) => console.log("Approved"),
+        onReadyForServerCompletion: (id, txid) => window.Pi.completePayment(id, txid),
+        onCancel: () => {},
         onError: (err) => alert("エラー: " + err.message)
       });
-    } catch (err) {
-      console.error(err);
+    } catch (e) {
+      alert("実行エラー: " + e.message);
     }
   };
-
-  // ✅ 1. 自動お掃除機能（ここで完結するように閉じカッコを整理したわ）
-  useEffect(() => {
-    const autoCleanUp = async () => {
-      if (window.Pi) {
-        try {
-          await window.Pi.init({ version: "2.0", sandbox: false });
-          const getIncomplete = window.Pi.getIncompletePayment || window.Pi.get_incomplete_payment;
-          if (typeof getIncomplete === 'function') {
-            const incomplete = await getIncomplete();
-            if (incomplete) {
-              await window.Pi.completePayment(incomplete.paymentId, "manual_fix");
-              alert("古い決済をお掃除したわ！これでボタンが使えるはずよ。");
-            }
-          }
-        } catch (e) {
-          console.log("お掃除不要（または失敗）:", e);
-        }
-      }
-    };
-    autoCleanUp();
-  }, []); // 👈 閉じカッコはここ！ここで一度区切るのが正解よ。
-
+  
+  // ... (あとのUI部分はそのままよ)
   // ✅ 2. データのガード（お掃除の外に出したわ）
   if (!days || days.length === 0) {
     return <div style={{ textAlign: "center", marginTop: "50px" }}>Loading calendar data...</div>;
