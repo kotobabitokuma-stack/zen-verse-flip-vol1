@@ -265,28 +265,30 @@ function AppWithPi({ user }) {
   const touchStartX = useRef(0);
 
   // ✅ 決済ロジック
-  const handlePayment = async () => {
+const handlePayment = async () => {
     const pi = window.Pi;
     if (!pi) return;
 
     try {
-      if (!isPiInitialized) {
-        console.log("Initializing Pi SDK...");
-        await pi.init({ version: "2.0", sandbox: true });
-        isPiInitialized = true;
-      }
+      // 初期化と同時に認証を通す（これが最短ルートよ）
+      const scopes = ['payments'];
+      const auth = await pi.authenticate(scopes, (payment) => {
+        console.log("未完了の決済:", payment);
+      });
 
-      console.log("Creating Payment...");
+      console.log("Authenticated for:", auth.user.username);
+
+      // 決済作成
       await pi.createPayment({
-        amount: 3.14,
+        amount: 3, 
         memo: "Support Zen Verse Flip Vol.1",
         metadata: { productId: "zen_verse_flip_v1" },
       }, {
         onIncompletePaymentFound: (id) => window.Pi.completePayment(id, "manual_fix"),
-        onReadyForServerApproval: (id) => console.log("Approved"),
+        onReadyForServerApproval: (id) => console.log("Server Approval Ready"),
         onReadyForServerCompletion: (id, txid) => window.Pi.completePayment(id, txid),
         onCancel: () => {},
-        onError: (err) => alert("エラー: " + err.message)
+        onError: (err) => alert("決済エラー: " + err.message)
       });
     } catch (e) {
       alert("実行エラー: " + e.message);
