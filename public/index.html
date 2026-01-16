@@ -2,63 +2,31 @@
 <html>
 <head>
     <meta charset="utf-8">
-    <title>Checklist Item 10 - Force Init</title>
     <script src="https://sdk.minepi.com/pi-sdk.js"></script>
-    <style>
-        body { text-align: center; padding-top: 50px; font-family: sans-serif; }
-        button { padding: 20px; font-size: 18px; background: #FFD700; border: none; border-radius: 10px; display: none; }
-    </style>
+    <script>
+        // 2. 読み込み後、即座に初期化を実行
+        function init() {
+            try {
+                // あえてバージョンを数値の 1 だけにする
+                window.Pi.init({ version: "1" });
+                window.Pi.authenticate(['username', 'payments'], function(p){})
+                .then(function(auth) {
+                    document.getElementById('status').innerText = "接続成功: " + auth.user.username;
+                    document.getElementById('pay-btn').style.display = "block";
+                })
+                .catch(function(e) {
+                    document.getElementById('status').innerText = "認証エラー: " + e.message;
+                });
+            } catch (e) {
+                // 失敗したらすぐに再試行
+                setTimeout(init, 1000);
+            }
+        }
+        window.onload = init;
+    </script>
 </head>
 <body>
-    <h2 id="status">Pi Networkに接続中...</h2>
-    <p id="retry-count"></p>
-    
-    <button id="pay-btn" onclick="runPay()">Pi決済テストを実行</button>
-
-    <script>
-        let retry = 0;
-        const status = document.getElementById('status');
-        const btn = document.getElementById('pay-btn');
-
-        async function forceInit() {
-            if (!window.Pi) {
-                status.innerText = "Piブラウザで開いてください";
-                return;
-            }
-
-            try {
-                // 強制的に初期化を叩く
-                await window.Pi.init({ version: "1.5" });
-                
-                // 初期化直後に認証をかける
-                const auth = await window.Pi.authenticate(['username', 'payments'], function(p){});
-                
-                status.innerText = "接続成功！: " + auth.user.username;
-                btn.style.display = "inline-block";
-            } catch (e) {
-                retry++;
-                document.getElementById('retry-count').innerText = "試行回数: " + retry;
-                // 失敗したら0.5秒後に自分自身をもう一度呼び出す（成功するまで無限ループ）
-                setTimeout(forceInit, 500);
-            }
-        }
-
-        function runPay() {
-            window.Pi.createPayment({
-                amount: 3,
-                memo: "Item 10 Final Test",
-                metadata: { productId: "test" }
-            }, {
-                onIncompletePaymentFound: (id) => window.Pi.completePayment(id, "manual_fix"),
-                onReadyForServerApproval: (id) => console.log("Approved"),
-                onReadyForServerCompletion: (id, txid) => window.Pi.completePayment(id, txid),
-                onCancel: () => {},
-                onError: (err) => alert(err.message)
-            });
-        }
-
-        // 起動
-        forceInit();
-    </script>
+    <h1 id="status">Pi 接続待機中...</h1>
+    <button id="pay-btn" onclick="/* 決済処理 */" style="display:none; padding:20px; background:gold;">Support (3 Pi)</button>
 </body>
 </html>
