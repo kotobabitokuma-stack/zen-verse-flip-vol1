@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react'; // 1行目: useEffect を追加してね！
+import React, { useState, useRef } from 'react'; // 1行目: useEffect を追加してね！
 
 // --- 画像インポート部分はそのまま維持 ---
 import top01 from "./assets/images/top01.png";
