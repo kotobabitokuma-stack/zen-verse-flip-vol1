@@ -232,30 +232,31 @@ const Pi = window.Pi;
 
 // 🟢 ここを追加！
 if (Pi) {
-  Pi.init({ version: "2.0", sandbox: true });
+  Pi.init({ version: "2.0", sandbox: false });
 }
 
 const handlePayment = async () => {
-  alert("ボタンは反応してるわよ！"); // 👈 これを追加！
+  alert("1. 処理開始よ！"); // これが出ればボタンはOK
   try {
-    // ...
     const scopes = ['payments'];
     
-    // 💥 儀式1：認証（シンプルにログイン！）
+    alert("2. 認証(authenticate)を呼び出すわよ..."); 
     const auth = await Pi.authenticate(scopes);
-    console.log("認証成功！パイオニア:", auth.user.username);
+    
+    alert("3. 認証成功！こんにちは、" + auth.user.username + "さん！");
 
-    // 🧹 儀式2：お掃除
-    try {
-      const incomplete = await Pi.getIncompletePayment();
-      if (incomplete) {
-        await Pi.completePayment(incomplete.paymentId, incomplete.transaction.txid);
-        alert("前回の決済を片付けたわ！もう一度ボタンを押してみて！");
-        return; 
-      }
-    } catch (e) {
-      console.log("お掃除チェック完了（異常なし）");
+    // 🧹 お掃除（未完了決済のチェック）
+    alert("4. 未完了決済がないかチェックするわね");
+    const incomplete = await Pi.getIncompletePayment();
+    if (incomplete) {
+      alert("5. 未完了があったから片付けるわ");
+      await Pi.completePayment(incomplete.paymentId, incomplete.transaction.txid);
+      alert("お掃除完了！もう一度ボタンを押してね。");
+      return;
     }
+
+    alert("6. いよいよ新しい決済を作るわよ！");
+    // ...この後に Pi.createPayment が続く
 
     // 🚀 儀式3：新しい決済リクエスト（これ1つだけに絞ったわ！）
     await Pi.createPayment({
