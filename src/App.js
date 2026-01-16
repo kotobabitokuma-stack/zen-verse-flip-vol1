@@ -229,8 +229,21 @@ There’s no need to hold back in your life.` }
 
 
 // --- Pi SDK 決済ロジック ---
+// --- 1. 必要な定義をここに追加したわよ ---
+let isPiInitialized = false;
 
-// --- UIコンポーネント ---
+const buttonStyle = {
+  padding: "6px 12px", 
+  fontSize: "14px", 
+  background: "transparent", 
+  color: "#555",
+  border: "1px solid #ccc", 
+  borderRadius: "8px", 
+  cursor: "pointer", 
+  opacity: 0.8
+};
+
+// --- 2. UIコンポーネント ---
 function PiUserBadge({ user }) {
   if (!user) return null;
   return (
@@ -243,20 +256,15 @@ function PiUserBadge({ user }) {
   );
 }
 
-const buttonStyle = {
-  padding: "6px 12px", fontSize: "14px", background: "transparent", color: "#555",
-  border: "1px solid #ccc", borderRadius: "8px", cursor: "pointer", opacity: 0.8
-};
-
-// --- アプリ本体 ---
-
-// ✅ 1. ここ（関数の外）に置くのがポイントよ！
-let isPiInitialized = false; 
-
+// --- 3. アプリ本体 ---
 function AppWithPi({ user }) {
+  // ✅ 状態管理 (useState)
   const [selectedDayIndex, setSelectedDayIndex] = useState(null);
-  // ... (中略)
+  const [showText, setShowText] = useState(false);
+  const [isTop, setIsTop] = useState(true);
+  const touchStartX = useRef(0);
 
+  // ✅ 決済ロジック
   const handlePayment = async () => {
     const pi = window.Pi;
     if (!pi) return;
@@ -284,14 +292,12 @@ function AppWithPi({ user }) {
       alert("実行エラー: " + e.message);
     }
   };
-  
-  // ... (あとのUI部分はそのままよ)
-  // ✅ 2. データのガード（お掃除の外に出したわ）
+
+  // ✅ データのガード (daysは外部で定義されている前提)
   if (!days || days.length === 0) {
     return <div style={{ textAlign: "center", marginTop: "50px" }}>Loading calendar data...</div>;
   }
 
-  // ✅ 3. 以降のロジック（ここからはゆうきくんの元のコードと同じよ）
   const selectedDay = selectedDayIndex !== null ? days[selectedDayIndex] : null;
 
   const handleSwipe = (direction) => {
@@ -311,6 +317,7 @@ function AppWithPi({ user }) {
     }
   };
 
+  // --- JSX (見た目) ---
   if (selectedDay === null) {
     if (isTop) {
       return (
@@ -335,6 +342,7 @@ function AppWithPi({ user }) {
         </div>
       );
     }
+
     return (
       <div style={{ textAlign: "center", padding: "10px" }}>
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(70px, 1fr))", gap: "10px", justifyItems: "center", marginBottom: "20px" }}>
@@ -366,20 +374,4 @@ function AppWithPi({ user }) {
             position: "absolute", bottom: 0, left: 0, width: "100%", maxHeight: showText ? "60%" : "0",
             overflowY: "auto", background: "linear-gradient(to top, rgba(0,0,0,0.85), rgba(0,0,0,0.3))",
             color: "white", padding: showText ? "15px" : "0", fontSize: "18px", lineHeight: "1.6",
-            textAlign: "left", borderRadius: "0 0 10px 10px", transition: "all 0.4s ease-in-out"
-          }}>
-            {selectedDay.text.split("\n").map((line, idx) => (
-              <p key={idx} style={{ margin: "0 0 12px 0" }}>{line}</p>
-            ))}
-          </div>
-        )}
-      </div>
-      <div style={{ position: "fixed", bottom: "80px", left: 0, width: "100%", display: "flex", justifyContent: "space-between", padding: "0 12px", boxSizing: "border-box", zIndex: 200 }}>
-        <button onClick={() => { setSelectedDayIndex(null); setShowText(false); }} style={buttonStyle}>All Days</button>
-        <button onClick={() => { setSelectedDayIndex(null); setShowText(false); setIsTop(true); }} style={buttonStyle}>Top</button>
-      </div>
-      <PiUserBadge user={user} />
-    </div>
-  );
-}
-export default AppWithPi;
+            textAlign: "left", borderRadius: "0 0 10px 10px", transition: "all 0.4s ease-in-out
