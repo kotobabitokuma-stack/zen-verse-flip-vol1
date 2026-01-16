@@ -374,7 +374,7 @@ function AppWithPi({ user }) {
             position: "absolute", bottom: 0, left: 0, width: "100%", maxHeight: showText ? "60%" : "0",
             overflowY: "auto", background: "linear-gradient(to top, rgba(0,0,0,0.85), rgba(0,0,0,0.3))",
             color: "white", padding: showText ? "15px" : "0", fontSize: "18px", lineHeight: "1.6",
-            textAlign: "left", borderRadius: "0 0 10px 10px", transition: "all 0.4s ease-in-out
+            textAlign: "left", borderRadius: "0 0 10px 10px", transition: "all 0.4s ease-in-out"
               textAlign: "left", borderRadius: "0 0 10px 10px", transition: "all 0.4s ease-in-out"
           }}>
             {selectedDay.text.split("\n").map((line, idx) => (
