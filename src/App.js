@@ -247,6 +247,10 @@ const handlePayment = async () => {
 
     console.log("認証成功！パイオニア:", auth.user.username);
 
+    const incomplete = await Pi.getIncompletePayment();
+if (incomplete) {
+  await Pi.completePayment(incomplete.paymentId, incomplete.transaction.txid);
+}
     // 🚀 儀式2：新しい決済リクエストを投げる
     await Pi.createPayment({
       amount: 3.0,
